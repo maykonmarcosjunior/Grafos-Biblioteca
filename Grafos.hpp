@@ -7,6 +7,8 @@ class Grafo
 {
 private:
     std::ifstream input_file;
+    int n_vertices;
+    int n_arcos;
     struct Vertice
     {
         int idx;
@@ -29,7 +31,6 @@ public:
             std::cout << "Erro ao abrir o arquivo!\n";
         }
         std::string confirm;
-        int n_vertices;
         input_file >> confirm >> n_vertices;
         if (confirm != "*vertices")
         {
@@ -40,13 +41,15 @@ public:
         for (int i = 0; i < n_vertices; ++i)
         {
             input_file >> indice >> rotulo;
+            Vertice v = Vertice(indice, rotulo);
         }
         input_file >> confirm;
         if (confirm != "*edges")
         {
             std::cout << "Erro ao ler o arquivo!\n";
         }
-        int u, v, peso, n_arcos = 0;
+        int u, v, peso;
+        n_arcos = 0;
         while (input_file >> u >> v >> peso)
         {
             n_arcos++;
@@ -54,9 +57,15 @@ public:
         input_file.close();
     }
     // retornr a quantidade de v ́ertices;
-    int qtdVertices() {}
+    int qtdVertices()
+    {
+        return n_vertices;
+    }
     // retorna a quantidade de arestas;
-    int qtdArestas() {}
+    int qtdArestas()
+    {
+        return n_arcos;
+    }
     // retorna o grau do vertice v
     int grau(int v) {}
     // retorna o rotulo do vertice v
