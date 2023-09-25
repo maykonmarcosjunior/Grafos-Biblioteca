@@ -1,13 +1,58 @@
 #ifndef GRAFOS_HPP
 #define GRAFOS_HPP
-
+#include <string>
+#include <fstream>
+#include <iostream>
 class Grafo
 {
 private:
+    std::ifstream input_file;
+    struct Vertice
+    {
+        int idx;
+        std::string rotulo
+        Vertice(int indice, std::string name)
+        {
+            idx = indice;
+            rotulo = name;
+        }
+    };
+
 public:
     // deve carregar um grafo a partir de um arquivo
     // no formato especificado ao final do enunciado
-    Grafo(char *nome_do_arquivo) {}
+    Grafo(std::string nome_do_arquivo)
+    {
+        input_file.open(nome_do_arquivo);
+        if (!input_file.is_open())
+        {
+            std::cout << "Erro ao abrir o arquivo!\n";
+        }
+        std::string confirm;
+        int n_vertices;
+        input_file >> confirm >> n_vertices;
+        if (confirm != "*vertices")
+        {
+            std::cout << "Erro ao ler o arquivo!\n";
+        }
+        int indice;
+        std::string rotulo;
+        for (int i = 0; i < n_vertices; ++i)
+        {
+            input_file >> indice >> rotulo;
+        }
+        input_file >> confirm;
+        if (confirm != "*edges")
+        {
+            std::cout << "Erro ao ler o arquivo!\n";
+        }
+        int u, v, peso, n_arcos = 0;
+        while (input_file >> u >> v >> peso)
+        {
+            n_arcos++;
+        }
+        input_file.close();
+    }
     // retornr a quantidade de v ́ertices;
     int qtdVertices() {}
     // retorna a quantidade de arestas;
