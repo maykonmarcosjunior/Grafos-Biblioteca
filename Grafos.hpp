@@ -308,6 +308,43 @@ public:
 
         return circuit;
     }
+
+    std::vector<std::vector<int>> floydWarshall()
+    {
+        int V = qtdVertices();
+        std::vector<std::vector<int>> dist(V, std::vector<int>(V, MAX));
+
+        // Inicializa as distâncias com os pesos das arestas existentes
+        for (const auto &arco : arcos)
+        {
+            dist[arco.u - 1][arco.v - 1] = arco.peso;
+            dist[arco.v - 1][arco.u - 1] = arco.peso; // Se o grafo for não direcionado
+        }
+
+        // Define a distância de um vértice para ele mesmo como 0
+        for (int i = 0; i < V; i++)
+        {
+            dist[i][i] = 0;
+        }
+
+        // Atualizando as distâncias
+        for (int k = 0; k < V; k++)
+        {
+            for (int i = 0; i < V; i++)
+            {
+                for (int j = 0; j < V; j++)
+                {
+                    if (dist[i][k] != MAX && dist[k][j] != MAX && dist[i][k] + dist[k][j] < dist[i][j])
+                    {
+                        dist[i][j] = dist[i][k] + dist[k][j];
+                    }
+                }
+            }
+        }
+
+        return dist;
+    }
+
 }; // Grafos
 
 #endif // GRAFOS_HPP
