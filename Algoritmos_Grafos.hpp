@@ -1,16 +1,8 @@
 #include "Grafos.hpp"
 
-/*
-Padrao de Arquivo de Entrada
-O arquivo de entrada deve estar no formato abaixo. Na primeira linha, n  ́e o n ́umero de v ́ertices. Nas linhas seguintes
-e antes da palavra “*edges”, h ́a uma listagem de r ́otulos dos v ́ertices. Note que cada v ́ertice possui um  ́ındice de 1 `a n.
-Esse  ́ındice  ́e importante, pois ele  ́e utilizado nas defini ̧c ̃oes das arestas. Depois da palavra “*edges” cada linha conter ́a uma aresta. Por exemplo, na linha onde h ́a “a b valor do peso”, a e b s ̃ao os v ́ertices que a aresta conecta, valor do peso
- ́e o peso da aresta.
- */
-
-// receba um arquivo de grafo e o  ́ındice do v ́ertice s como argumentos3.
+// receba um arquivo de grafo e o  ́ındice do vértice s como argumentos.
 // O programa deve fazer uma busca em largura4 a partir de s e devera
-// imprimir a sa ́ıda na tela, onde cada linha dever ́a conter o nıvel
+// imprimir a saida na tela, onde cada linha devera conter o nıvel
 // seguido de “:” e a listagem de v ́ertices encontrados naquele nıvel.
 void busca_em_largura();
 
