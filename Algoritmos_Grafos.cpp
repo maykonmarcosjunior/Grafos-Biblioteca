@@ -14,6 +14,8 @@ void busca_em_largura(std::string arquivo_do_grafo, int start)
 
 void ciclo_euleriano(std::string arquivo_do_grafo)
 {
+    Grafo G = Grafo(arquivo_do_grafo);
+    G.cicloEuleriano();
 }
 
 void bellman_ford(std::string arquivo_do_grafo, int start)
@@ -24,6 +26,16 @@ void bellman_ford(std::string arquivo_do_grafo, int start)
     std::vector<int> distancias(V, MAX);
     std::vector<int> ancestrais(V, -1);
     G.bellman_ford(start, ancestrais, distancias);
+}
+
+void dijkstra(std::string arquivo_do_grafo, int start)
+{
+    Grafo G = Grafo(arquivo_do_grafo);
+    int V = G.qtdVertices();
+    // Inicializar distâncias e precursores
+    std::vector<int> distancias(V, MAX);
+    std::vector<int> ancestrais(V, -1);
+    G.dijkstra(start, ancestrais, distancias);
 }
 
 void floyd_warshall(std::string arquivo_do_grafo)

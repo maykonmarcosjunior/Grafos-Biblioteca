@@ -4,6 +4,8 @@
 #include <vector>
 #include <queue>
 #include <stack>
+#include <map>
+#include <list>
 #include <fstream>
 #include <iostream>
 #define MAX 2147483647
@@ -32,6 +34,70 @@ private:
     std::vector<Vertice> vertices;
     // vetor com todos os arcos
     std::vector<Arco> arcos;
+    // matriz de adjacencia
+    std::vector<std::vector<int>> matriz;
+
+    // printa o caminho de start a end, inclusive
+    void printa_caminho(int start, int end,
+                        std::vector<int> &ancestrais)
+    {
+        // se não for -1
+        if (end != start)
+        {
+            printa_caminho(start, ancestrais.at(end), ancestrais);
+        }
+        std::cout << end << ',';
+    }
+
+    std::pair<bool, std::list<int>> buscarSubCicloEuleriano(int v, std::map<Arco, bool> &C)
+    {
+        std::list<int> Ciclo = {v};
+        int origem = v;
+        do
+        {
+            if (vertices[v - 1].vizinhos.empty())
+            {
+                return {false, {}};
+            }
+
+            int u = -1;
+            for (int viz : vertices[v - 1].vizinhos)
+            {
+                Arco e = {v, viz, peso(v, viz)};
+                if (C.find(e) == C.end() || !C[e])
+                {
+                    u = viz;
+                    break;
+                }
+            }
+
+            if (u == -1)
+            {
+                return {false, {}};
+            }
+
+            C[{v, u, peso(v, u)}] = true;
+            Ciclo.push_back(u);
+            v = u;
+        } while (v != origem);
+
+        for (int x : Ciclo)
+        {
+            for (int adj : vertices[x - 1].vizinhos)
+            {
+                if (C.find({x, adj, peso(x, adj)}) == C.end() || !C[{x, adj, peso(x, adj)}])
+                {
+                    auto [achou, Ciclo0] = buscarSubCicloEuleriano(adj, C);
+                    if (!achou)
+                    {
+                        return {false, {}};
+                    }
+                    Ciclo.splice(std::find(Ciclo.begin(), Ciclo.end(), x), Ciclo0);
+                }
+            }
+        }
+        return {true, Ciclo};
+    }
 
 public:
     // carrega s vértices e arcos
@@ -50,6 +116,8 @@ public:
         {
             std::cout << "Erro ao ler o arquivo!\n";
         }
+        // criando a matriz de adjacencia
+        matriz.resize(n_vertices, std::vector<int>(n_vertices, MAX));
         // para ler vértice a vértice
         int indice;
         std::string rotulo;
@@ -77,6 +145,7 @@ public:
             arcos.push_back(e);
             vertices[u - 1].vizinhos.push_back(v);
             vertices[v - 1].vizinhos.push_back(u);
+            matriz[u - 1][v - 1] = peso;
         }
         input_file.close();
     }
@@ -105,32 +174,17 @@ public:
     {
         return vertices.at(v - 1).vizinhos;
     }
-    // se {u, v}∈ E, retorna verdadeiro; se nao existir, retorna falso
+    // se {u, v} ∈ E, retorna verdadeiro;
+    // se nao existir, retorna falso
     bool haAresta(int u, int v)
     {
-        std::vector<int> *vizinhos = &(vertices[u - 1].vizinhos);
-        for (int i = 0; i < static_cast<int>(vizinhos->size()); ++i)
-        {
-            if (vizinhos->at(i) == v)
-            {
-                return true;
-            }
-        }
-        return false;
+        return matriz[u - 1][v - 1] != MAX;
     }
     // se {u, v} ∈ E, retorna o peso da aresta {u, v};
     // se nao existir, retorna um valor infinito positivo;
     int peso(int u, int v)
     {
-        for (int i = 0; i < static_cast<int>(arcos.size()); ++i)
-        {
-            Arco *e = &(arcos[i]);
-            if (e->u == u && e->v == v)
-            {
-                return e->peso;
-            }
-        }
-        return MAX;
+        return matriz[u - 1][v - 1] != MAX;
     }
 
     // printa a arvore de busca em largura
@@ -154,10 +208,10 @@ public:
         std::vector<std::string> saida;
         for (int i = 0; i < V; ++i)
         {
-            std::string nivel = "nivel " + std::to_string(i) + ":";
+            std::string nivel = std::to_string(i) + ": ";
             saida.push_back(nivel);
         }
-        saida[0] += " " + std::to_string(start);
+        saida[0] += std::to_string(start);
         int n_niveis = 0;
         while (fila.size())
         {
@@ -170,7 +224,14 @@ public:
                     ancestrais[v - 1] = u;
                     conhecidos[v - 1] = 1;
                     int nivel = distancias[u - 1] + 1;
-                    saida[nivel] += " " + std::to_string(v);
+                    if (saida[nivel].back() == ':')
+                    {
+                        saida[nivel] += std::to_string(v);
+                    }
+                    else
+                    {
+                        saida[nivel] += "," + std::to_string(v);
+                    }
                     if (nivel > n_niveis)
                     {
                         n_niveis = nivel;
@@ -185,23 +246,44 @@ public:
             std::cout << saida[i] << '\n';
         }
     }
+
+    std::pair<bool, std::list<int>> cicloEuleriano()
+    {
+        std::map<Arco, bool> C;
+        int v = vertices[0].idx; // Seleciona o primeiro vértice conectado a uma aresta
+        auto [achou, Ciclo] = buscarSubCicloEuleriano(v, C);
+
+        if (!achou)
+        {
+            return {false, {}};
+        }
+
+        for (const Arco &e : arcos)
+        {
+            if (C.find(e) == C.end() || !C[e])
+            {
+                return {false, {}};
+            }
+        }
+
+        return {true, Ciclo};
+    }
+
+    // printa a distância entre s e os outros vértices
     bool bellman_ford(int s, std::vector<int> &ancestrais,
                       std::vector<int> &distancias)
     {
-        int V = qtdVertices();
-        int E = qtdArestas();
-
-        distancias[s - 1] = 0; // distância do vértice inicial é 0
+        distancias.at(s - 1) = 0; // distância do vértice inicial é 0
 
         // Relaxar as arestas V-1 vezes
-        for (int i = 1; i < V; i++)
+        for (int _ = 1; _ < qtdVertices(); _++)
         {
             for (Arco e : arcos)
             {
                 int u = e.u;
                 int v = e.v;
                 int weight = e.peso;
-                if (distancias[v - 1] >= distancias[u - 1] + weight)
+                if (distancias[u - 1] != MAX && distancias[v - 1] >= distancias[u - 1] + weight)
                 {
                     distancias[v - 1] = distancias[u - 1] + weight;
                     ancestrais[v - 1] = u;
@@ -222,10 +304,16 @@ public:
             }
         }
 
+        for (int i = 1; i <= qtdVertices(); ++i)
+        {
+            std::cout << i << ": " << s;
+            printa_caminho(s, i, ancestrais);
+            std::cout << "; d=" << distancias[i - 1] << '\n';
+        }
         return true;
     }
 
-    void Dijkstra(int s, std::vector<int> &dist, std::vector<int> &pred)
+    void dijkstra(int s, std::vector<int> &dist, std::vector<int> &pred)
     {
         int V = qtdVertices();
 
@@ -261,70 +349,23 @@ public:
         }
     }
 
-    std::vector<int> Hierholzer()
-    {
-        int start_vertex = 0;
-        int odd_count = 0;
-
-        for (int i = 0; i < qtdVertices(); ++i)
-        {
-            if (grau(i + 1) % 2 != 0)
-            {
-                odd_count++;
-                start_vertex = i;
-            }
-        }
-
-        if (odd_count != 0 && odd_count != 2)
-        {
-            // Não é possível encontrar um caminho ou ciclo euleriano.
-            return {};
-        }
-
-        std::stack<int> current_path;
-        std::vector<int> circuit;
-
-        current_path.push(start_vertex + 1);
-
-        int current_vertex = start_vertex + 1;
-
-        while (!current_path.empty())
-        {
-            if (!vertices[current_vertex - 1].vizinhos.empty())
-            {
-                current_path.push(current_vertex);
-                int next_vertex = vertices[current_vertex - 1].vizinhos.back();
-                // Removendo a aresta do grafo
-                vertices[current_vertex - 1].vizinhos.pop_back();
-                current_vertex = next_vertex;
-            }
-            else
-            {
-                circuit.push_back(current_vertex);
-                current_vertex = current_path.top();
-                current_path.pop();
-            }
-        }
-
-        return circuit;
-    }
-
-    std::vector<std::vector<int>> floydWarshall()
+    // printa a distancia entre quaisquer par de vértices
+    std::vector<std::vector<int>> floyd_warshall()
     {
         int V = qtdVertices();
-        std::vector<std::vector<int>> dist(V, std::vector<int>(V, MAX));
+        std::vector<std::vector<int>> distancias(V, std::vector<int>(V, MAX));
 
         // Inicializa as distâncias com os pesos das arestas existentes
-        for (const auto &arco : arcos)
+        for (Arco arco : arcos)
         {
-            dist[arco.u - 1][arco.v - 1] = arco.peso;
-            dist[arco.v - 1][arco.u - 1] = arco.peso; // Se o grafo for não direcionado
+            distancias[arco.u - 1][arco.v - 1] = arco.peso;
+            distancias[arco.v - 1][arco.u - 1] = arco.peso; // Se o grafo for não direcionado
         }
 
         // Define a distância de um vértice para ele mesmo como 0
         for (int i = 0; i < V; i++)
         {
-            dist[i][i] = 0;
+            distancias[i][i] = 0;
         }
 
         // Atualizando as distâncias
@@ -334,15 +375,23 @@ public:
             {
                 for (int j = 0; j < V; j++)
                 {
-                    if (dist[i][k] != MAX && dist[k][j] != MAX && dist[i][k] + dist[k][j] < dist[i][j])
+                    if (distancias[i][k] != MAX && distancias[k][j] != MAX && distancias[i][k] + distancias[k][j] < distancias[i][j])
                     {
-                        dist[i][j] = dist[i][k] + dist[k][j];
+                        distancias[i][j] = distancias[i][k] + distancias[k][j];
                     }
                 }
             }
         }
-
-        return dist;
+        for (int i = 0; i < V; ++i)
+        {
+            std::cout << i + 1 << ':';
+            for (int j = 0; j < V - 1; ++j)
+            {
+                std::cout << distancias[i][j] << ',';
+            }
+            std::cout << distancias[i][V - 1] << '\n';
+        }
+        return distancias;
     }
 
 }; // Grafos
