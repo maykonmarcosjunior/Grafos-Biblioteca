@@ -37,17 +37,27 @@ private:
     // matriz de adjacencia
     std::vector<std::vector<int>> matriz;
 
-    // printa o caminho de start a end, inclusive
-    void printa_caminho(int start, int end,
-                        std::vector<int> &ancestrais)
+    // obtém o caminho feito pelo bellman-for
+    std::vector<int> get_path(int start, int end, std::vector<int> &ancestrais)
     {
-        // se não for -1
-        if (end != start)
+        std::vector<int> path;
+
+        // Se não for possível chegar ao destino
+        // a partir da origem, retorne um caminho vazio
+        if (ancestrais[end - 1] == -1 && start != end)
+            return path;
+
+        // Vá de trás para frente para construir o caminho
+        // Vá de trás para frente para construir o caminho
+        int current = end;
+        while (current != -1)
         {
-            printa_caminho(start, ancestrais.at(end), ancestrais);
+            path.insert(path.begin(), current);
+            current = ancestrais[current - 1];
         }
-        std::cout << end << ',';
+        return path;
     }
+
     /*
         std::pair<bool, std::list<int>> buscarSubCicloEuleriano(int v, std::map<Arco, bool> &C)
         {
@@ -225,7 +235,7 @@ public:
                     ancestrais[v - 1] = u;
                     conhecidos[v - 1] = 1;
                     int nivel = distancias[u - 1] + 1;
-                    if (saida[nivel].back() == ':')
+                    if (saida[nivel].back() == ' ')
                     {
                         saida[nivel] += std::to_string(v);
                     }
@@ -242,7 +252,7 @@ public:
                 }
             }
         }
-        for (int i = 0; i < n_niveis; ++i)
+        for (int i = 0; i <= n_niveis; ++i)
         {
             std::cout << saida[i] << '\n';
         }
@@ -316,8 +326,14 @@ public:
         for (int i = 1; i <= V; ++i)
         {
             std::cout << i << ": " << s;
-            printa_caminho(s, i, ancestrais);
-            std::cout << "; d=" << distancias[i - 1] << '\n';
+            std::vector<int> path = get_path(s, i, ancestrais);
+            for (size_t j = 0; j < path.size(); ++j)
+            {
+                std::cout << path[j];
+                if (j < path.size() - 1)
+                    std::cout << ',';
+            }
+            std::cout << "; d=" << distancias[i - 1] << std::endl;
         }
         return true;
     }
