@@ -50,11 +50,12 @@ private:
         // Vá de trás para frente para construir o caminho
         // Vá de trás para frente para construir o caminho
         int current = end;
-        while (current != -1)
+        while (current != -1 && current != start)
         {
             path.insert(path.begin(), current);
             current = ancestrais[current - 1];
         }
+        path.insert(path.begin(), start); // incluir o vértice de início
         return path;
     }
 
@@ -157,6 +158,7 @@ public:
             vertices[u - 1].vizinhos.push_back(v);
             vertices[v - 1].vizinhos.push_back(u);
             matriz[u - 1][v - 1] = peso;
+            matriz[v - 1][u - 1] = peso;
         }
         input_file.close();
     }
@@ -302,7 +304,7 @@ public:
                 int u = e.u;
                 int v = e.v;
                 int weight = e.peso;
-                if (distancias[u - 1] != MAX && distancias[v - 1] >= distancias[u - 1] + weight)
+                if (distancias[u - 1] != MAX && distancias[v - 1] > distancias[u - 1] + weight)
                 {
                     distancias[v - 1] = distancias[u - 1] + weight;
                     ancestrais[v - 1] = u;
@@ -325,13 +327,15 @@ public:
 
         for (int i = 1; i <= V; ++i)
         {
-            std::cout << i << ": " << s;
+            std::cout << i << ": ";
             std::vector<int> path = get_path(s, i, ancestrais);
             for (size_t j = 0; j < path.size(); ++j)
             {
                 std::cout << path[j];
                 if (j < path.size() - 1)
+                {
                     std::cout << ',';
+                }
             }
             std::cout << "; d=" << distancias[i - 1] << std::endl;
         }
