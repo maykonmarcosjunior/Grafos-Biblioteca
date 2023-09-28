@@ -48,56 +48,57 @@ private:
         }
         std::cout << end << ',';
     }
-
-    std::pair<bool, std::list<int>> buscarSubCicloEuleriano(int v, std::map<Arco, bool> &C)
-    {
-        std::list<int> Ciclo = {v};
-        int origem = v;
-        do
+    /*
+        std::pair<bool, std::list<int>> buscarSubCicloEuleriano(int v, std::map<Arco, bool> &C)
         {
-            if (vertices[v - 1].vizinhos.empty())
+            std::list<int> Ciclo = {v};
+            int origem = v;
+            do
             {
-                return {false, {}};
-            }
-
-            int u = -1;
-            for (int viz : vertices[v - 1].vizinhos)
-            {
-                Arco e = {v, viz, peso(v, viz)};
-                if (C.find(e) == C.end() || !C[e])
+                if (vertices[v - 1].vizinhos.empty())
                 {
-                    u = viz;
-                    break;
+                    return {false, {}};
                 }
-            }
 
-            if (u == -1)
-            {
-                return {false, {}};
-            }
-
-            C[{v, u, peso(v, u)}] = true;
-            Ciclo.push_back(u);
-            v = u;
-        } while (v != origem);
-
-        for (int x : Ciclo)
-        {
-            for (int adj : vertices[x - 1].vizinhos)
-            {
-                if (C.find({x, adj, peso(x, adj)}) == C.end() || !C[{x, adj, peso(x, adj)}])
+                int u = -1;
+                for (int viz : vertices[v - 1].vizinhos)
                 {
-                    auto [achou, Ciclo0] = buscarSubCicloEuleriano(adj, C);
-                    if (!achou)
+                    Arco e = {v, viz, peso(v, viz)};
+                    if (C.find(e) == C.end() || !C[e])
                     {
-                        return {false, {}};
+                        u = viz;
+                        break;
                     }
-                    Ciclo.splice(std::find(Ciclo.begin(), Ciclo.end(), x), Ciclo0);
+                }
+
+                if (u == -1)
+                {
+                    return {false, {}};
+                }
+
+                C[{v, u, peso(v, u)}] = true;
+                Ciclo.push_back(u);
+                v = u;
+            } while (v != origem);
+
+            for (int x : Ciclo)
+            {
+                for (int adj : vertices[x - 1].vizinhos)
+                {
+                    if (C.find({x, adj, peso(x, adj)}) == C.end() || !C[{x, adj, peso(x, adj)}])
+                    {
+                        auto [achou, Ciclo0] = buscarSubCicloEuleriano(adj, C);
+                        if (!achou)
+                        {
+                            return {false, {}};
+                        }
+                        Ciclo.splice(std::find(Ciclo.begin(), Ciclo.end(), x), Ciclo0);
+                    }
                 }
             }
+            return {true, Ciclo};
         }
-        return {true, Ciclo};
-    }
+    */
 
 public:
     // carrega s vértices e arcos
@@ -184,7 +185,7 @@ public:
     // se nao existir, retorna um valor infinito positivo;
     int peso(int u, int v)
     {
-        return matriz[u - 1][v - 1] != MAX;
+        return matriz[u - 1][v - 1];
     }
 
     // printa a arvore de busca em largura
@@ -195,11 +196,11 @@ public:
     {
         int V = qtdVertices();
         // ninguém tem ancestrais
-        std::vector<int> ancestrais(V, -1);
+        ancestrais.assign(V, -1);
+        // a distância é sempre infinita
+        distancias.assign(V, MAX);
         // não visitamos ninguém
         std::vector<bool> conhecidos(V, 0);
-        // a distância é sempre infinita
-        std::vector<int> distancias(V, MAX);
 
         conhecidos[start - 1] = 1;
         distancias[start - 1] = 0;
@@ -247,36 +248,44 @@ public:
         }
     }
 
-    std::pair<bool, std::list<int>> cicloEuleriano()
-    {
-        std::map<Arco, bool> C;
-        int v = vertices[0].idx; // Seleciona o primeiro vértice conectado a uma aresta
-        auto [achou, Ciclo] = buscarSubCicloEuleriano(v, C);
-
-        if (!achou)
+    /*
+        std::pair<bool, std::list<int>> cicloEuleriano()
         {
-            return {false, {}};
-        }
+            std::map<Arco, bool> C;
+            int v = vertices[0].idx; // Seleciona o primeiro vértice conectado a uma aresta
+            std::pair<bool, std::list<int>> resultado = buscarSubCicloEuleriano(v, C);
+            bool achou = resultado.first;
+            std::list<int> Ciclo = resultado.second;
 
-        for (const Arco &e : arcos)
-        {
-            if (C.find(e) == C.end() || !C[e])
+            if (!achou)
             {
                 return {false, {}};
             }
+
+            for (const Arco &e : arcos)
+            {
+                if (C.find(e) == C.end() || !C[e])
+                {
+                    return {false, {}};
+                }
+            }
+
+            return {true, Ciclo};
         }
-
-        return {true, Ciclo};
-    }
-
+    */
     // printa a distância entre s e os outros vértices
     bool bellman_ford(int s, std::vector<int> &ancestrais,
                       std::vector<int> &distancias)
     {
+        int V = qtdVertices();
+        // ninguém tem ancestrais
+        ancestrais.assign(V, -1);
+        // a distância é sempre infinita
+        distancias.assign(V, MAX);
         distancias.at(s - 1) = 0; // distância do vértice inicial é 0
 
         // Relaxar as arestas V-1 vezes
-        for (int _ = 1; _ < qtdVertices(); _++)
+        for (int _ = 1; _ < V; _++)
         {
             for (Arco e : arcos)
             {
@@ -304,7 +313,7 @@ public:
             }
         }
 
-        for (int i = 1; i <= qtdVertices(); ++i)
+        for (int i = 1; i <= V; ++i)
         {
             std::cout << i << ": " << s;
             printa_caminho(s, i, ancestrais);
