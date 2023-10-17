@@ -25,7 +25,8 @@ private:
     // e o peso da ligação
     struct Arco
     {
-        int u, v, peso;
+        int u, v;
+        float peso;
     };
 
     // arquivo que dará origem ao grafo
@@ -35,7 +36,7 @@ private:
     // vetor com todos os arcos
     std::vector<Arco> arcos;
     // matriz de adjacencia
-    std::vector<std::vector<int>> matriz;
+    std::vector<std::vector<float>> matriz;
 
     // obtém o caminho feito pelo bellman-for
     std::vector<int> get_path(int start, int end, std::vector<int> &ancestrais)
@@ -127,7 +128,7 @@ public:
             std::cout << "Erro ao ler o arquivo!\n";
         }
         // criando a matriz de adjacencia
-        matriz.resize(n_vertices, std::vector<int>(n_vertices, MAX));
+        matriz.resize(n_vertices, std::vector<float>(n_vertices, MAX));
         // para ler vértice a vértice
         int indice;
         std::string rotulo;
@@ -145,7 +146,8 @@ public:
             std::cout << "Erro ao ler o arquivo!\n";
         }
         // lendo arco a arco
-        int u, v, peso;
+        int u, v;
+        float peso;
         while (input_file >> u >> v >> peso)
         {
             Arco e;
@@ -193,7 +195,7 @@ public:
     }
     // se {u, v} ∈ E, retorna o peso da aresta {u, v};
     // se nao existir, retorna um valor infinito positivo;
-    int peso(int u, int v)
+    float peso(int u, int v)
     {
         return matriz[u - 1][v - 1];
     }
