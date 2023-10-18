@@ -12,7 +12,20 @@ void busca_em_largura(std::string arquivo_do_grafo, int start)
 void ciclo_euleriano(std::string arquivo_do_grafo)
 {
     Grafo G = Grafo(arquivo_do_grafo);
-    G.cicloEuleriano();
+    std::pair<bool, std::list<int>> resultado = G.cicloEuleriano();
+    if (resultado.first)
+    {
+        std::cout << "1\n";
+        for (auto it = resultado.second.begin(); it != resultado.second.end(); it++)
+        {
+            std::cout << *it << " ";
+        }
+        std::cout << "\n";
+    }
+    else
+    {
+        std::cout << "0\n";
+    }
 }
 
 void bellman_ford(std::string arquivo_do_grafo, int start)
@@ -49,8 +62,8 @@ int main(int argc, char **argv)
     std::string nome_do_arquivo = argv[1];
     std::cout << "Busca em Largura\n";
     busca_em_largura(nome_do_arquivo, start);
-    // std::cout << "\nCiclo Euleriano\n";
-    // ciclo_euleriano(nome_do_arquivo);
+    std::cout << "\nCiclo Euleriano\n";
+    ciclo_euleriano(nome_do_arquivo);
     std::cout << "\nBellman Ford\n";
     bellman_ford(nome_do_arquivo, start);
     std::cout << "\nFloyd Warshall\n";
