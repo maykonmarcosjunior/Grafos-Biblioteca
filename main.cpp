@@ -4,9 +4,11 @@
 void busca_em_largura(std::string arquivo_do_grafo, int start)
 {
     Grafo G = Grafo(arquivo_do_grafo);
-    std::vector<int> ancestrais;
-    std::vector<int> distancias;
-    G.busca_em_largura(start, ancestrais, distancias);
+    std::vector<std::string> resultado = G.busca_em_largura(start);
+    for (std::string i : resultado)
+    {
+        std::cout << i << '\n';
+    }
 }
 
 void ciclo_euleriano(std::string arquivo_do_grafo)
@@ -31,18 +33,29 @@ void ciclo_euleriano(std::string arquivo_do_grafo)
 void bellman_ford(std::string arquivo_do_grafo, int start)
 {
     Grafo G = Grafo(arquivo_do_grafo);
-    // Inicializar distâncias e precursores
-    std::vector<int> distancias;
-    std::vector<int> ancestrais;
-    G.bellman_ford(start, ancestrais, distancias);
+    std::string resultado = G.bellman_ford(start);
+    if (resultado.size() > 0)
+    {
+        std::cout << resultado << '\n';
+    }
+    else
+    {
+        std::cout << "0\n";
+    }
 }
 
 void dijkstra(std::string arquivo_do_grafo, int start)
 {
     Grafo G = Grafo(arquivo_do_grafo);
-    std::vector<int> distancias;
-    std::vector<int> ancestrais;
-    G.dijkstra(start, ancestrais, distancias);
+    std::string resultado = G.dijkstra(start);
+    if (resultado.size() > 0)
+    {
+        std::cout << resultado << '\n';
+    }
+    else
+    {
+        std::cout << "0\n";
+    }
 }
 
 void floyd_warshall(std::string arquivo_do_grafo)
@@ -66,6 +79,8 @@ int main(int argc, char **argv)
     ciclo_euleriano(nome_do_arquivo);
     std::cout << "\nBellman Ford\n";
     bellman_ford(nome_do_arquivo, start);
+    std::cout << "\nDijkstra\n";
+    dijkstra(nome_do_arquivo, start);
     std::cout << "\nFloyd Warshall\n";
     floyd_warshall(nome_do_arquivo);
     return 0;

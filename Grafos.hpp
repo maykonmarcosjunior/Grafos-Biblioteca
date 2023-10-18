@@ -210,9 +210,10 @@ public:
     // printa a arvore de busca em largura
     // onde cada posição corresponde a um
     // nível da arvore
-    void busca_em_largura(int start, std::vector<int> &ancestrais,
-                          std::vector<int> &distancias)
+    std::vector<std::string> busca_em_largura(int start)
     {
+        std::vector<int> ancestrais;
+        std::vector<int> distancias;
         int V = qtdVertices();
         // ninguém tem ancestrais
         ancestrais.assign(V, -1);
@@ -261,10 +262,11 @@ public:
                 }
             }
         }
-        for (int i = 0; i <= n_niveis; ++i)
+        while (static_cast<int>(saida.size()) > n_niveis + 1)
         {
-            std::cout << saida[i] << '\n';
+            saida.pop_back();
         }
+        return saida;
     }
 
     std::pair<bool, std::list<int>> cicloEuleriano()
@@ -292,10 +294,12 @@ public:
         return {true, Ciclo};
     }
 
-    // printa a distância entre s e os outros vértices
-    bool bellman_ford(int s, std::vector<int> &ancestrais,
-                      std::vector<int> &distancias)
+    // retorna a distância entre s e os outros vértices
+    std::string bellman_ford(int s)
     {
+        // Inicializar distâncias e precursores
+        std::vector<int> ancestrais;
+        std::vector<int> distancias;
         int V = qtdVertices();
         // ninguém tem ancestrais
         ancestrais.assign(V, -1);
@@ -320,6 +324,7 @@ public:
             }
         }
 
+        std::string saida;
         // Verificar ciclos de peso negativo
         for (Arco e : arcos)
         {
@@ -329,29 +334,31 @@ public:
             if (distancias[u - 1] + weight < distancias[v - 1])
             {
                 // Ciclo de peso negativo encontrado
-                return false;
+                return saida;
             }
         }
 
         for (int i = 1; i <= V; ++i)
         {
-            std::cout << i << ": ";
+            saida += std::to_string(i) + ": ";
             std::vector<int> path = get_path(s, i, ancestrais);
             for (size_t j = 0; j < path.size(); ++j)
             {
-                std::cout << path[j];
+                saida += std::to_string(path[j]);
                 if (j < path.size() - 1)
                 {
-                    std::cout << ',';
+                    saida += ',';
                 }
             }
-            std::cout << "; d=" << distancias[i - 1] << std::endl;
+            saida += "; d=" + std::to_string(distancias[i - 1]) + '\n';
         }
-        return true;
+        return saida;
     }
 
-    void dijkstra(int s, std::vector<int> &dist, std::vector<int> &pred)
+    std::string dijkstra(int s)
     {
+        std::vector<int> dist;
+        std::vector<int> pred;
         int V = qtdVertices();
 
         dist.assign(V, MAX);
@@ -384,6 +391,22 @@ public:
                 }
             }
         }
+        std::string saida;
+        for (int i = 1; i <= V; ++i)
+        {
+            saida += std::to_string(i) + ": ";
+            std::vector<int> path = get_path(s, i, pred);
+            for (size_t j = 0; j < path.size(); ++j)
+            {
+                saida += std::to_string(path[j]);
+                if (j < path.size() - 1)
+                {
+                    saida += ',';
+                }
+            }
+            saida += "; d=" + std::to_string(dist[i - 1]) + '\n';
+        }
+        return saida;
     }
 
     // printa a distancia entre quaisquer par de vértices
