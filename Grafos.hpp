@@ -8,6 +8,7 @@
 #include <list>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 #define MAX 2147483647
 class Grafo
 {
@@ -27,6 +28,10 @@ private:
     {
         int u, v;
         float peso;
+        bool operator<(const Arco &outro) const
+        {
+            return peso < outro.peso;
+        }
     };
 
     // arquivo que dará origem ao grafo
@@ -98,12 +103,12 @@ private:
             {
                 if (C.find({x, adj, peso(x, adj)}) == C.end() || !C[{x, adj, peso(x, adj)}])
                 {
-                    auto [achou, Ciclo0] = buscarSubCicloEuleriano(adj, C);
-                    if (!achou)
+                    std::pair<bool, std::list<int>> resultado = buscarSubCicloEuleriano(adj, C);
+                    if (!resultado.first)
                     {
                         return {false, {}};
                     }
-                    Ciclo.splice(std::find(Ciclo.begin(), Ciclo.end(), x), Ciclo0);
+                    Ciclo.splice(std::find(Ciclo.begin(), Ciclo.end(), x), resultado.second);
                 }
             }
         }
@@ -111,7 +116,7 @@ private:
     }
 
 public:
-    // carrega s vértices e arcos
+    // carrega os vértices e arcos
     // a partir do nome do arquivo
     Grafo(std::string nome_do_arquivo)
     {
@@ -125,16 +130,19 @@ public:
         input_file >> confirm >> n_vertices;
         if (confirm != "*vertices")
         {
-            std::cout << "Erro ao ler o arquivo!\n";
+            std::cout << "Erro ao ler o arquivo\n";
         }
         // criando a matriz de adjacencia
         matriz.resize(n_vertices, std::vector<float>(n_vertices, MAX));
         // para ler vértice a vértice
-        int indice;
-        std::string rotulo;
         for (int i = 0; i < n_vertices; ++i)
         {
-            input_file >> indice >> rotulo;
+            int indice;
+            std::string rotulo;
+            // lendo o indice
+            input_file >> indice;
+            // aramzenando o resto da linha em label
+            std::getline(input_file, rotulo);
             Vertice v;
             v.idx = indice;
             v.label = rotulo;
@@ -158,7 +166,6 @@ public:
             vertices[u - 1].vizinhos.push_back(v);
             vertices[v - 1].vizinhos.push_back(u);
             matriz[u - 1][v - 1] = peso;
-            matriz[v - 1][u - 1] = peso;
         }
         input_file.close();
     }
@@ -263,7 +270,8 @@ public:
     std::pair<bool, std::list<int>> cicloEuleriano()
     {
         std::map<Arco, bool> C;
-        int v = vertices[0].idx; // Seleciona o primeiro vértice conectado a uma aresta
+        // Seleciona o primeiro vértice conectado a uma aresta
+        int v = vertices[0].idx;
         std::pair<bool, std::list<int>> resultado = buscarSubCicloEuleriano(v, C);
         bool achou = resultado.first;
         std::list<int> Ciclo = resultado.second;
@@ -293,7 +301,8 @@ public:
         ancestrais.assign(V, -1);
         // a distância é sempre infinita
         distancias.assign(V, MAX);
-        distancias.at(s - 1) = 0; // distância do vértice inicial é 0
+        // distância do vértice inicial é 0
+        distancias.at(s - 1) = 0;
 
         // Relaxar as arestas V-1 vezes
         for (int _ = 1; _ < V; _++)
@@ -302,8 +311,8 @@ public:
             {
                 int u = e.u;
                 int v = e.v;
-                int weight = e.peso;
-                if (distancias[u - 1] != MAX && distancias[v - 1] > distancias[u - 1] + weight)
+                float weight = e.peso;
+                if (distancias[u - 1] < MAX && distancias[v - 1] > distancias[u - 1] + weight)
                 {
                     distancias[v - 1] = distancias[u - 1] + weight;
                     ancestrais[v - 1] = u;
@@ -316,7 +325,7 @@ public:
         {
             int u = e.u;
             int v = e.v;
-            int weight = e.peso;
+            float weight = e.peso;
             if (distancias[u - 1] + weight < distancias[v - 1])
             {
                 // Ciclo de peso negativo encontrado
@@ -349,7 +358,7 @@ public:
         pred.assign(V, -1);
         std::vector<bool> visited(V, false);
 
-        using pii = std::pair<int, int>; // Peso, Vértice
+        using pii = std::pair<float, int>; // Peso, Vértice
         std::priority_queue<pii, std::vector<pii>, std::greater<pii>> pq;
 
         dist[s - 1] = 0;
@@ -366,7 +375,7 @@ public:
 
             for (int v : vizinhos(u))
             {
-                int weight = peso(u, v);
+                float weight = peso(u, v);
                 if (!visited[v - 1] && dist[u - 1] + weight < dist[v - 1])
                 {
                     dist[v - 1] = dist[u - 1] + weight;
@@ -378,16 +387,17 @@ public:
     }
 
     // printa a distancia entre quaisquer par de vértices
-    std::vector<std::vector<int>> floyd_warshall()
+    std::vector<std::vector<float>> floyd_warshall()
     {
         int V = qtdVertices();
-        std::vector<std::vector<int>> distancias(V, std::vector<int>(V, MAX));
+        std::vector<std::vector<float>> distancias(V, std::vector<float>(V, MAX));
 
         // Inicializa as distâncias com os pesos das arestas existentes
         for (Arco arco : arcos)
         {
             distancias[arco.u - 1][arco.v - 1] = arco.peso;
-            distancias[arco.v - 1][arco.u - 1] = arco.peso; // Se o grafo for não direcionado
+            // Se o grafo for não direcionado
+            distancias[arco.v - 1][arco.u - 1] = arco.peso;
         }
 
         // Define a distância de um vértice para ele mesmo como 0
@@ -403,7 +413,7 @@ public:
             {
                 for (int j = 0; j < V; j++)
                 {
-                    if (distancias[i][k] != MAX && distancias[k][j] != MAX && distancias[i][k] + distancias[k][j] < distancias[i][j])
+                    if (distancias[i][k] < MAX && distancias[k][j] < MAX && distancias[i][k] + distancias[k][j] < distancias[i][j])
                     {
                         distancias[i][j] = distancias[i][k] + distancias[k][j];
                     }

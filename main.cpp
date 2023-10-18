@@ -8,12 +8,12 @@ void busca_em_largura(std::string arquivo_do_grafo, int start)
     std::vector<int> distancias;
     G.busca_em_largura(start, ancestrais, distancias);
 }
-/*
+
 void ciclo_euleriano(std::string arquivo_do_grafo)
 {
     Grafo G = Grafo(arquivo_do_grafo);
     G.cicloEuleriano();
-} */
+}
 
 void bellman_ford(std::string arquivo_do_grafo, int start)
 {
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 {
     if (argc != 2)
     {
-        std::cout << "Erro, voce deve digitar %s <nome-do-arquivo>\n", argv[0];
+        std::cout << "Erro, voce deve digitar" << argv[0] << "<nome-do-arquivo>\n";
         return 1;
     }
     int start = 1;
