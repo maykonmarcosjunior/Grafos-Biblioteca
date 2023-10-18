@@ -14,11 +14,11 @@ void busca_em_largura(std::string arquivo_do_grafo, int start)
 void ciclo_euleriano(std::string arquivo_do_grafo)
 {
     Grafo G = Grafo(arquivo_do_grafo);
-    std::pair<bool, std::list<int>> resultado = G.cicloEuleriano();
-    if (resultado.first)
+    std::list<int> resultado = G.cicloEuleriano();
+    if (resultado.size())
     {
         std::cout << "1\n";
-        for (auto it = resultado.second.begin(); it != resultado.second.end(); it++)
+        for (auto it = resultado.begin(); it != resultado.end(); it++)
         {
             std::cout << *it << " ";
         }

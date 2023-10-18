@@ -1,13 +1,15 @@
 #ifndef GRAFOS_HPP
 #define GRAFOS_HPP
+#include <fstream>
+#include <iostream>
 #include <string>
-#include <vector>
 #include <queue>
 #include <stack>
-#include <map>
 #include <list>
-#include <fstream>
+#include <vector>
+#include <map>
 #include <algorithm>
+#include <numeric>
 #define MAX 2147483647
 class Grafo
 {
@@ -33,14 +35,13 @@ private:
         }
     };
 
-    // arquivo que dará origem ao grafo
-    std::ifstream input_file;
     // vetor com todos os vértices
     std::vector<Vertice> vertices;
     // vetor com todos os arcos
     std::vector<Arco> arcos;
     // matriz de adjacencia
-    std::vector<std::vector<float>> matriz;
+    using Matriz_float = std::vector<std::vector<float>>;
+    Matriz_float matriz;
 
     // obtém o caminho feito pelo bellman-for
     std::vector<int> get_path(int start, int end, std::vector<int> &ancestrais)
@@ -64,7 +65,7 @@ private:
         return path;
     }
 
-    std::pair<bool, std::list<int>> buscarSubCicloEuleriano(int v, std::map<Arco, bool> &C)
+    std::list<int> buscarSubCicloEuleriano(int v, std::map<Arco, bool> &C)
     {
         std::list<int> Ciclo = {v};
         int origem = v;
@@ -72,7 +73,8 @@ private:
         {
             if (vertices[v - 1].vizinhos.empty())
             {
-                return {false, {}};
+                Ciclo.clear();
+                return Ciclo;
             }
 
             int u = -1;
@@ -102,16 +104,17 @@ private:
             {
                 if (C.find({x, adj, peso(x, adj)}) == C.end() || !C[{x, adj, peso(x, adj)}])
                 {
-                    std::pair<bool, std::list<int>> resultado = buscarSubCicloEuleriano(adj, C);
-                    if (!resultado.first)
+                    std::list<int> resultado = buscarSubCicloEuleriano(adj, C);
+                    if (!resultado.size())
                     {
-                        return {false, {}};
+                        Ciclo.clear();
+                        return Ciclo;
                     }
-                    Ciclo.splice(std::find(Ciclo.begin(), Ciclo.end(), x), resultado.second);
+                    Ciclo.splice(std::find(Ciclo.begin(), Ciclo.end(), x), resultado);
                 }
             }
         }
-        return {true, Ciclo};
+        return Ciclo;
     }
 
 public:
@@ -119,17 +122,19 @@ public:
     // a partir do nome do arquivo
     Grafo(std::string nome_do_arquivo)
     {
+        // arquivo que dará origem ao grafo
+        std::ifstream input_file;
         input_file.open(nome_do_arquivo);
         if (!input_file.is_open())
         {
-            std::cout << "Erro ao abrir o arquivo!\n";
+            std::cerr << "Erro ao abrir o arquivo!\n";
         }
         std::string confirm;
         int n_vertices;
         input_file >> confirm >> n_vertices;
         if (confirm != "*vertices")
         {
-            std::cout << "Erro ao ler o arquivo\n";
+            std::cerr << "Erro ao ler os vertices\n";
         }
         // criando a matriz de adjacencia
         matriz.resize(n_vertices, std::vector<float>(n_vertices, MAX));
@@ -148,9 +153,9 @@ public:
             vertices.push_back(v);
         }
         input_file >> confirm;
-        if (confirm != "*edges")
+        if (confirm != "*edges" && confirm != "*arcs")
         {
-            std::cout << "Erro ao ler o arquivo!\n";
+            std::cerr << "Erro ao ler os arcos/arestas!\n";
         }
         // lendo arco a arco
         int u, v;
@@ -165,6 +170,10 @@ public:
             vertices[u - 1].vizinhos.push_back(v);
             vertices[v - 1].vizinhos.push_back(u);
             matriz[u - 1][v - 1] = peso;
+            if (confirm == "*edges")
+            {
+                matriz[v - 1][u - 1] = peso;
+            }
         }
         input_file.close();
     }
@@ -268,29 +277,29 @@ public:
         return saida;
     }
 
-    std::pair<bool, std::list<int>> cicloEuleriano()
+    std::list<int> cicloEuleriano()
     {
         std::map<Arco, bool> C;
         // Seleciona o primeiro vértice conectado a uma aresta
         int v = vertices[0].idx;
-        std::pair<bool, std::list<int>> resultado = buscarSubCicloEuleriano(v, C);
-        bool achou = resultado.first;
-        std::list<int> Ciclo = resultado.second;
+        std::list<int> Ciclo = buscarSubCicloEuleriano(v, C);
 
-        if (!achou)
+        if (!Ciclo.size())
         {
-            return {false, {}};
+            Ciclo.clear();
+            return Ciclo;
         }
 
         for (const Arco &e : arcos)
         {
             if (C.find(e) == C.end() || !C[e])
             {
-                return {false, {}};
+                Ciclo.clear();
+                return Ciclo;
             }
         }
 
-        return {true, Ciclo};
+        return Ciclo;
     }
 
     // retorna a distância entre s e os outros vértices
@@ -443,6 +452,128 @@ public:
             }
         }
         return distancias;
+    }
+
+    void DFSVisit(int s,
+                  int &tempo,
+                  std::vector<int> &Conhecidos,
+                  std::vector<int> &Inicio,
+                  std::vector<int> &Ancestrais,
+                  std::vector<int> &Final)
+    {
+        Conhecidos[s] = 1;
+        tempo++;
+        Inicio[s] = tempo;
+
+        for (int u : vizinhos(s + 1))
+        { // ajustando para 0-indexado
+            if (!Conhecidos[u - 1])
+            { // ajustando para 0-indexado
+                Ancestrais[u - 1] = s;
+                DFSVisit(u - 1, tempo, Conhecidos, Inicio, Ancestrais, Final);
+            }
+        }
+        tempo++;
+        Final.push_back(tempo);
+    }
+
+    std::vector<std::vector<int>> DFS()
+    {
+        int n = qtdVertices();
+        std::vector<int> Conhecidos(n, 0);
+        std::vector<int> Inicio(n, -1);
+        std::vector<int> Ancestrais(n, -1);
+        std::vector<int> Final;
+
+        int tempo = 0;
+
+        for (int u = 0; u < n; u++)
+        {
+            if (!Conhecidos[u])
+            {
+                DFSVisit(u, tempo, Conhecidos, Inicio, Ancestrais, Final);
+            }
+        }
+        std::vector<std::vector<int>> saida;
+        saida.push_back(Conhecidos);
+        saida.push_back(Inicio);
+        saida.push_back(Ancestrais);
+        saida.push_back(Final);
+        return saida;
+    }
+
+    void getTranspose(std::vector<Arco> &arcosTranspostos,
+                      std::vector<std::vector<float>> &matrizTransposta)
+    {
+        arcosTranspostos.clear();
+
+        // Inverte a ordem dos arcos para criar a lista de arcos transposta
+        for (const Arco &arco : arcos)
+        {
+            arcosTranspostos.push_back({arco.v, arco.u, arco.peso});
+        }
+
+        // Cria a matriz transposta a partir da matriz original
+        for (int i = 0; i < qtdVertices(); i++)
+        {
+            for (int j = 0; j < qtdVertices(); j++)
+            {
+                matrizTransposta[j][i] = matrizTransposta[i][j];
+            }
+        }
+    }
+
+    std::vector<int> ComponentesFortementeConexas()
+    {
+        std::vector<std::vector<int>> dfs = DFS();
+        std::vector<int> C = dfs[0];
+        std::vector<int> T = dfs[1];
+        std::vector<int> A = dfs[2];
+        std::vector<int> F = dfs[3];
+
+        std::vector<std::vector<float>> matrizTransposta;
+        std::vector<Arco> arcosTranspostos;
+        getTranspose(arcosTranspostos, matrizTransposta);
+
+        std::vector<int> ordem(F.size());
+        std::iota(ordem.begin(), ordem.end(), 0);
+        std::sort(ordem.begin(), ordem.end(), [&F](int i, int j)
+                  { return F[i] > F[j]; });
+
+        std::vector<std::vector<int>> dfsA = DFSAdaptado(ordem,
+                                                         matrizTransposta,
+                                                         arcosTranspostos);
+        std::vector<int> CT = dfs[0];
+        std::vector<int> TT = dfs[1];
+        std::vector<int> AT = dfs[2];
+        std::vector<int> FT = dfs[3];
+        return AT;
+    }
+
+    std::vector<std::vector<int>> DFSAdaptado(const std::vector<int> &ordem, std::vector<std::vector<float>> &matrizTransposta,
+                                              std::vector<Arco> &arcosTranspostos)
+    {
+        int n = qtdVertices();
+        std::vector<int> Conhecidos(n, 0);
+        std::vector<int> Inicio(n, -1);
+        std::vector<int> Ancestrais(n, -1);
+        std::vector<int> Final;
+
+        int tempo = 0;
+
+        for (int idx : ordem)
+        {
+            if (!Conhecidos[idx])
+            {
+                DFSVisit(idx, tempo, Conhecidos, Inicio, Ancestrais, Final);
+            }
+        }
+        std::vector<std::vector<int>> saida;
+        saida.push_back(Conhecidos);
+        saida.push_back(Inicio);
+        saida.push_back(Ancestrais);
+        saida.push_back(Final);
+        return saida;
     }
 
 }; // Grafos
