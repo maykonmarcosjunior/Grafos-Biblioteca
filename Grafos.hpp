@@ -7,7 +7,6 @@
 #include <map>
 #include <list>
 #include <fstream>
-#include <iostream>
 #include <algorithm>
 #define MAX 2147483647
 class Grafo
@@ -442,15 +441,6 @@ public:
                     }
                 }
             }
-        }
-        for (int i = 0; i < V; ++i)
-        {
-            std::cout << i + 1 << ':';
-            for (int j = 0; j < V - 1; ++j)
-            {
-                std::cout << distancias[i][j] << ',';
-            }
-            std::cout << distancias[i][V - 1] << '\n';
         }
         return distancias;
     }

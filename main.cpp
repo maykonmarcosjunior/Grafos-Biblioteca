@@ -61,7 +61,16 @@ void dijkstra(std::string arquivo_do_grafo, int start)
 void floyd_warshall(std::string arquivo_do_grafo)
 {
     Grafo G = Grafo(arquivo_do_grafo);
-    G.floyd_warshall();
+    auto distancias = G.floyd_warshall();
+    for (std::size_t i = 0; i < distancias.size(); ++i)
+    {
+        std::cout << i + 1 << ':';
+        for (std::size_t j = 0; j < distancias.size() - 1; ++j)
+        {
+            std::cout << distancias[i][j] << ',';
+        }
+        std::cout << distancias[i][distancias.size() - 1] << '\n';
+    }
 }
 
 int main(int argc, char **argv)
