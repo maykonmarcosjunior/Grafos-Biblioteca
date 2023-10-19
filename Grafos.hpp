@@ -43,7 +43,7 @@ private:
     using Matriz_float = std::vector<std::vector<float>>;
     Matriz_float matriz;
 
-    // obtém o caminho feito pelo bellman-for
+    // obtém o caminho feito pelo bellman-ford
     std::vector<int> get_path(int start, int end, std::vector<int> &ancestrais)
     {
         std::vector<int> path;
@@ -454,6 +454,86 @@ public:
         return distancias;
     }
 
+    std::vector<std::vector<int>> DFS()
+    {
+        int V = qtdVertices();
+        std::vector<int> Conhecidos(V, 0);
+        std::vector<int> Inicio(V, -1);
+        std::vector<int> Ancestrais(V, -1);
+        std::vector<int> Final;
+
+        int tempo = 0;
+
+        for (int u = 0; u < V; u++)
+        {
+            if (!Conhecidos[u])
+            {
+                DFSVisit(u, tempo, Conhecidos, Inicio, Ancestrais, Final);
+            }
+        }
+        std::vector<std::vector<int>> saida;
+        saida.push_back(Conhecidos);
+        saida.push_back(Inicio);
+        saida.push_back(Ancestrais);
+        saida.push_back(Final);
+        return saida;
+    }
+
+    std::vector<int> DFSAdaptado(const std::vector<int> &ordem,
+                                 std::vector<std::vector<int>> &vizinhosT)
+    {
+        int V = qtdVertices();
+        std::vector<int> Conhecidos(V, 0);
+        std::vector<int> Inicio(V, -1);
+        std::vector<int> Ancestrais(V, -1);
+        std::vector<int> Final;
+
+        int tempo = 0;
+
+        for (int idx : ordem)
+        {
+            if (!Conhecidos[idx])
+            {
+                DFSVisitAdaptado(idx, tempo,
+                                 Conhecidos,
+                                 Inicio,
+                                 Ancestrais,
+                                 Final,
+                                 vizinhosT);
+            }
+        }
+        return Ancestrais;
+    }
+
+    void DFSVisitAdaptado(int s,
+                          int &tempo,
+                          std::vector<int> &Conhecidos,
+                          std::vector<int> &Inicio,
+                          std::vector<int> &Ancestrais,
+                          std::vector<int> &Final,
+                          std::vector<std::vector<int>> &vizinhosT)
+    {
+        Conhecidos[s] = 1;
+        tempo++;
+        Inicio[s] = tempo;
+
+        for (int u : vizinhosT[s + 1])
+        { // ajustando para 0-indexado
+            if (!Conhecidos[u - 1])
+            { // ajustando para 0-indexado
+                Ancestrais[u - 1] = s;
+                DFSVisitAdaptado(u - 1, tempo,
+                                 Conhecidos,
+                                 Inicio,
+                                 Ancestrais,
+                                 Final,
+                                 vizinhosT);
+            }
+        }
+        tempo++;
+        Final.push_back(tempo);
+    }
+
     void DFSVisit(int s,
                   int &tempo,
                   std::vector<int> &Conhecidos,
@@ -477,49 +557,14 @@ public:
         Final.push_back(tempo);
     }
 
-    std::vector<std::vector<int>> DFS()
+    void getTranspose(std::vector<std::vector<int>> &vizinhosT)
     {
-        int n = qtdVertices();
-        std::vector<int> Conhecidos(n, 0);
-        std::vector<int> Inicio(n, -1);
-        std::vector<int> Ancestrais(n, -1);
-        std::vector<int> Final;
-
-        int tempo = 0;
-
-        for (int u = 0; u < n; u++)
-        {
-            if (!Conhecidos[u])
-            {
-                DFSVisit(u, tempo, Conhecidos, Inicio, Ancestrais, Final);
-            }
-        }
-        std::vector<std::vector<int>> saida;
-        saida.push_back(Conhecidos);
-        saida.push_back(Inicio);
-        saida.push_back(Ancestrais);
-        saida.push_back(Final);
-        return saida;
-    }
-
-    void getTranspose(std::vector<Arco> &arcosTranspostos,
-                      std::vector<std::vector<float>> &matrizTransposta)
-    {
-        arcosTranspostos.clear();
-
+        int V = qtdVertices();
+        matriz.resize(V);
         // Inverte a ordem dos arcos para criar a lista de arcos transposta
         for (const Arco &arco : arcos)
         {
-            arcosTranspostos.push_back({arco.v, arco.u, arco.peso});
-        }
-
-        // Cria a matriz transposta a partir da matriz original
-        for (int i = 0; i < qtdVertices(); i++)
-        {
-            for (int j = 0; j < qtdVertices(); j++)
-            {
-                matrizTransposta[j][i] = matrizTransposta[i][j];
-            }
+            vizinhosT[arco.v].push_back(arco.u);
         }
     }
 
@@ -531,49 +576,16 @@ public:
         std::vector<int> A = dfs[2];
         std::vector<int> F = dfs[3];
 
-        std::vector<std::vector<float>> matrizTransposta;
-        std::vector<Arco> arcosTranspostos;
-        getTranspose(arcosTranspostos, matrizTransposta);
+        std::vector<std::vector<int>> vizinhosTranspostos;
+        getTranspose(vizinhosTranspostos);
 
         std::vector<int> ordem(F.size());
         std::iota(ordem.begin(), ordem.end(), 0);
         std::sort(ordem.begin(), ordem.end(), [&F](int i, int j)
                   { return F[i] > F[j]; });
 
-        std::vector<std::vector<int>> dfsA = DFSAdaptado(ordem,
-                                                         matrizTransposta,
-                                                         arcosTranspostos);
-        std::vector<int> CT = dfs[0];
-        std::vector<int> TT = dfs[1];
-        std::vector<int> AT = dfs[2];
-        std::vector<int> FT = dfs[3];
+        std::vector<int> AT = DFSAdaptado(ordem, vizinhosTranspostos);
         return AT;
-    }
-
-    std::vector<std::vector<int>> DFSAdaptado(const std::vector<int> &ordem, std::vector<std::vector<float>> &matrizTransposta,
-                                              std::vector<Arco> &arcosTranspostos)
-    {
-        int n = qtdVertices();
-        std::vector<int> Conhecidos(n, 0);
-        std::vector<int> Inicio(n, -1);
-        std::vector<int> Ancestrais(n, -1);
-        std::vector<int> Final;
-
-        int tempo = 0;
-
-        for (int idx : ordem)
-        {
-            if (!Conhecidos[idx])
-            {
-                DFSVisit(idx, tempo, Conhecidos, Inicio, Ancestrais, Final);
-            }
-        }
-        std::vector<std::vector<int>> saida;
-        saida.push_back(Conhecidos);
-        saida.push_back(Inicio);
-        saida.push_back(Ancestrais);
-        saida.push_back(Final);
-        return saida;
     }
 
 }; // Grafos
