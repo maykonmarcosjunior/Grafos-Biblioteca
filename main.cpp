@@ -73,6 +73,58 @@ void floyd_warshall(std::string arquivo_do_grafo)
     }
 }
 
+void componentes_fortemente_conexas(std::string arquivo_do_grafo)
+{
+    Grafo G = Grafo(arquivo_do_grafo);
+    std::vector<int> resultado = G.componentes_fortemente_conexas();
+    for (std::size_t i = 0; i < resultado.size(); ++i)
+    {
+        std::cout << resultado[i] << ':';
+    }
+}
+
+void ordenacao_topologica(std::string arquivo_do_grafo)
+{
+    Grafo G = Grafo(arquivo_do_grafo);
+    std::vector<std::string> resultado = G.ordenacao_topologica();
+    for (std::size_t i = 0; i < resultado.size(); ++i)
+    {
+        std::cout << resultado[i] << ':';
+    }
+}
+
+void Prim(std::string arquivo_do_grafo)
+{
+    Grafo G = Grafo(arquivo_do_grafo);
+
+    std::vector<std::vector<int>> resultado = G.Prim();
+    int soma = 0;
+    std::string arestas;
+    for (std::size_t i = 0; i < resultado.size(); ++i)
+    {
+        arestas += resultado[i][0] + '-' + resultado[i][1] + ", ";
+        soma += resultado[i][2];
+    }
+    std::cout << soma << '\n';
+    std::cout << arestas << '\n';
+}
+
+void Kruskal(std::string arquivo_do_grafo)
+{
+    Grafo G = Grafo(arquivo_do_grafo);
+
+    std::vector<std::vector<int>> resultado = G.Prim();
+    int soma = 0;
+    std::string arestas;
+    for (std::size_t i = 0; i < resultado.size(); ++i)
+    {
+        arestas += resultado[i][0] + '-' + resultado[i][1] + ", ";
+        soma += resultado[i][2];
+    }
+    std::cout << soma << '\n';
+    std::cout << arestas << '\n';
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 2)
@@ -92,5 +144,11 @@ int main(int argc, char **argv)
     dijkstra(nome_do_arquivo, start);
     std::cout << "\nFloyd Warshall\n";
     floyd_warshall(nome_do_arquivo);
+    std::cout << "\nComponentes Fortemente Conexas\n";
+    componentes_fortemente_conexas(nome_do_arquivo);
+    std::cout << "\nPrim\n";
+    Prim(nome_do_arquivo);
+    std::cout << "\nKruskal\n";
+    Kruskal(nome_do_arquivo);
     return 0;
 }
