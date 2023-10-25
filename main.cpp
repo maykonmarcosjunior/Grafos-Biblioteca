@@ -79,18 +79,19 @@ void componentes_fortemente_conexas(std::string arquivo_do_grafo)
     std::vector<int> resultado = G.componentes_fortemente_conexas();
     for (std::size_t i = 0; i < resultado.size(); ++i)
     {
-        std::cout << resultado[i] << ':';
+        std::cout << resultado[i] << ',';
     }
 }
 
 void ordenacao_topologica(std::string arquivo_do_grafo)
 {
     Grafo G = Grafo(arquivo_do_grafo);
-    std::vector<std::string> resultado = G.ordenacao_topologica();
+    std::vector<int> resultado = G.ordenacao_topologica();
     for (std::size_t i = 0; i < resultado.size(); ++i)
     {
-        std::cout << resultado[i] << ':';
+        std::cout << G.rotulo(resultado[i]) << "→";
     }
+    std::cout << ".\n";
 }
 
 void Prim(std::string arquivo_do_grafo)
@@ -113,7 +114,7 @@ void Kruskal(std::string arquivo_do_grafo)
 {
     Grafo G = Grafo(arquivo_do_grafo);
 
-    std::vector<std::vector<int>> resultado = G.Prim();
+    std::vector<std::vector<int>> resultado = G.Kruskal();
     int soma = 0;
     std::string arestas;
     for (std::size_t i = 0; i < resultado.size(); ++i)
@@ -132,8 +133,9 @@ int main(int argc, char **argv)
         std::cout << "Erro, voce deve digitar" << argv[0] << "<nome-do-arquivo>\n";
         return 1;
     }
-    int start = 1;
     std::string nome_do_arquivo = argv[1];
+    /*
+    int start = 1;
     std::cout << "Busca em Largura\n";
     busca_em_largura(nome_do_arquivo, start);
     std::cout << "\nCiclo Euleriano\n";
@@ -144,11 +146,14 @@ int main(int argc, char **argv)
     dijkstra(nome_do_arquivo, start);
     std::cout << "\nFloyd Warshall\n";
     floyd_warshall(nome_do_arquivo);
-    std::cout << "\nComponentes Fortemente Conexas\n";
-    componentes_fortemente_conexas(nome_do_arquivo);
-    std::cout << "\nPrim\n";
-    Prim(nome_do_arquivo);
+    */
+    // std::cout << "\nComponentes Fortemente Conexas\n";
+    // componentes_fortemente_conexas(nome_do_arquivo);
+    // std::cout << "\nOrdenacao Topologica\n";
+    // ordenacao_topologica(nome_do_arquivo);
     std::cout << "\nKruskal\n";
     Kruskal(nome_do_arquivo);
+    std::cout << "\nPrim\n";
+    Prim(nome_do_arquivo);
     return 0;
 }
