@@ -81,6 +81,7 @@ void componentes_fortemente_conexas(std::string arquivo_do_grafo)
     {
         std::cout << resultado[i] << ',';
     }
+    std::cout << '\n';
 }
 
 void ordenacao_topologica(std::string arquivo_do_grafo)
@@ -147,10 +148,10 @@ int main(int argc, char **argv)
     std::cout << "\nFloyd Warshall\n";
     floyd_warshall(nome_do_arquivo);
     */
-    // std::cout << "\nComponentes Fortemente Conexas\n";
-    // componentes_fortemente_conexas(nome_do_arquivo);
-    // std::cout << "\nOrdenacao Topologica\n";
-    // ordenacao_topologica(nome_do_arquivo);
+    std::cout << "\nComponentes Fortemente Conexas\n";
+    componentes_fortemente_conexas(nome_do_arquivo);
+    std::cout << "\nOrdenacao Topologica\n";
+    ordenacao_topologica(nome_do_arquivo);
     std::cout << "\nKruskal\n";
     Kruskal(nome_do_arquivo);
     std::cout << "\nPrim\n";

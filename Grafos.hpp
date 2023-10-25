@@ -454,23 +454,29 @@ public:
         return distancias;
     }
 
-    void DFSVisit(int s,
-                  int &tempo,
-                  std::vector<int> &Conhecidos,
-                  std::vector<int> &Inicio,
-                  std::vector<int> &Ancestrais,
-                  std::vector<int> &Final)
+    void DFSVisitAdaptado(int s,
+                          int &tempo,
+                          std::vector<int> &Conhecidos,
+                          std::vector<int> &Inicio,
+                          std::vector<int> &Ancestrais,
+                          std::vector<int> &Final,
+                          std::vector<std::vector<int>> &vizinhosT)
     {
-        Conhecidos[s] = 1;
+        Conhecidos.at(s - 1) = 1;
         tempo++;
-        Inicio[s] = tempo;
+        Inicio.at(s - 1) = tempo;
 
-        for (int u : vizinhos(s + 1))
+        for (int u : vizinhosT.at(s - 1))
         { // ajustando para 0-indexado
             if (!Conhecidos.at(u - 1))
             { // ajustando para 0-indexado
                 Ancestrais.at(u - 1) = s;
-                DFSVisit(u - 1, tempo, Conhecidos, Inicio, Ancestrais, Final);
+                DFSVisitAdaptado(u, tempo,
+                                 Conhecidos,
+                                 Inicio,
+                                 Ancestrais,
+                                 Final,
+                                 vizinhosT);
             }
         }
         tempo++;
@@ -490,7 +496,7 @@ public:
 
         for (int idx : ordem)
         {
-            if (!Conhecidos[idx])
+            if (!Conhecidos.at(idx - 1))
             {
                 DFSVisitAdaptado(idx, tempo,
                                  Conhecidos,
@@ -503,29 +509,24 @@ public:
         return Ancestrais;
     }
 
-    void DFSVisitAdaptado(int s,
-                          int &tempo,
-                          std::vector<int> &Conhecidos,
-                          std::vector<int> &Inicio,
-                          std::vector<int> &Ancestrais,
-                          std::vector<int> &Final,
-                          std::vector<std::vector<int>> &vizinhosT)
+    void DFSVisit(int s,
+                  int &tempo,
+                  std::vector<int> &Conhecidos,
+                  std::vector<int> &Inicio,
+                  std::vector<int> &Ancestrais,
+                  std::vector<int> &Final)
     {
-        Conhecidos[s] = 1;
+        Conhecidos[s - 1] = 1;
         tempo++;
-        Inicio[s] = tempo;
+        Inicio[s - 1] = tempo;
 
-        for (int u : vizinhosT.at(s + 1))
+        for (int u : vizinhos(s))
         { // ajustando para 0-indexado
             if (!Conhecidos.at(u - 1))
             { // ajustando para 0-indexado
                 Ancestrais.at(u - 1) = s;
-                DFSVisitAdaptado(u - 1, tempo,
-                                 Conhecidos,
-                                 Inicio,
-                                 Ancestrais,
-                                 Final,
-                                 vizinhosT);
+                DFSVisit(u, tempo, Conhecidos,
+                         Inicio, Ancestrais, Final);
             }
         }
         tempo++;
@@ -542,11 +543,12 @@ public:
 
         int tempo = 0;
 
-        for (int u = 0; u < V; u++)
+        for (int u = 1; u <= V; u++)
         {
-            if (!Conhecidos[u])
+            if (!Conhecidos[u - 1])
             {
-                DFSVisit(u, tempo, Conhecidos, Inicio, Ancestrais, Final);
+                DFSVisit(u, tempo, Conhecidos,
+                         Inicio, Ancestrais, Final);
             }
         }
         std::vector<std::vector<int>> saida;
@@ -560,23 +562,18 @@ public:
     std::vector<int> componentes_fortemente_conexas()
     {
         std::vector<std::vector<int>> dfs = DFS();
-        std::vector<int> C = dfs[0];
-        std::vector<int> T = dfs[1];
-        std::vector<int> A = dfs[2];
         std::vector<int> F = dfs[3];
 
         std::vector<std::vector<int>> vizinhosTranspostos(qtdVertices());
         // Inverte a ordem dos arcos para criar a lista de arcos transposta
         for (const Arco &arco : arcos)
         {
-            vizinhosTranspostos[arco.v].push_back(arco.u);
+            vizinhosTranspostos[arco.v - 1].push_back(arco.u);
         }
-
         std::vector<int> ordem(F.size());
-        std::iota(ordem.begin(), ordem.end(), 0);
+        std::iota(ordem.begin(), ordem.end(), 1);
         std::sort(ordem.begin(), ordem.end(), [&F](int i, int j)
                   { return F[i] > F[j]; });
-
         std::vector<int> AT = DFSAdaptado(ordem, vizinhosTranspostos);
         return AT;
     }
@@ -588,12 +585,12 @@ public:
 
         // inicializa o vetor de graus de entrada
         std::vector<int> grau_de_entrada(qtdVertices(), 0);
-        for (int i = 0; i < qtdVertices(); i++)
+        for (int i = 1; i <= qtdVertices(); i++)
         {
             for (std::size_t j = 0; j < vizinhos(i).size(); j++)
             {
                 int v = vizinhos(i)[j];
-                grau_de_entrada[v]++;
+                grau_de_entrada[v - 1]++;
             }
         }
 
@@ -602,7 +599,7 @@ public:
         {
             if (grau_de_entrada[i] == 0)
             {
-                fila.push(i);
+                fila.push(i + 1);
             }
         }
 
@@ -617,8 +614,8 @@ public:
             for (std::size_t i = 0; i < vizinhos(v).size(); i++)
             {
                 int u = vizinhos(v)[i];
-                grau_de_entrada[u]--;
-                if (grau_de_entrada[u] == 0)
+                grau_de_entrada[u - 1]--;
+                if (grau_de_entrada[u - 1] == 0)
                 {
                     fila.push(u);
                 }
@@ -628,7 +625,8 @@ public:
         // verifica se houve ciclo
         if (static_cast<int>(ordem.size()) != qtdVertices())
         {
-            throw std::runtime_error("O grafo contém um ciclo!");
+            std::cerr << "O grafo contém um ciclo!";
+            ordem.clear();
         }
         return ordem;
     }
@@ -636,22 +634,24 @@ public:
     // função auxiliar para encontrar o pai de um conjunto disjunto
     int encontrar_pai(std::vector<int> &pai, int u)
     {
-        if (pai[u] == u)
+        std::cout << "u = " << u << std::endl;
+        if (pai.at(u - 1) == u)
         {
             return u;
         }
-        return pai[u] = encontrar_pai(pai, pai[u]);
+        return pai.at(u - 1) = encontrar_pai(pai, pai.at(u - 1));
     }
 
     // implementação do algoritmo de Kruskal para encontrar a árvore geradora mínima do grafo
     std::vector<std::vector<int>> Kruskal()
     {
+        int V = qtdVertices();
         std::vector<std::vector<int>> saida;
         std::vector<std::pair<int, std::pair<int, int>>> arvore_geradora_minima;
         std::vector<std::pair<int, std::pair<int, int>>> arestas;
 
         // cria um vetor com todas as arestas do grafo
-        for (int i = 0; i < this->qtdVertices(); i++)
+        for (int i = 1; i <= V; i++)
         {
             for (std::size_t j = 0; j < this->vizinhos(i).size(); j++)
             {
@@ -665,9 +665,9 @@ public:
         std::sort(arestas.begin(), arestas.end());
 
         // inicializa a estrutura de conjuntos disjuntos
-        std::vector<int> pai(this->qtdVertices());
-        std::vector<int> tamanho(this->qtdVertices());
-        for (int i = 0; i < this->qtdVertices(); i++)
+        std::vector<int> pai(V);
+        std::vector<int> tamanho(V);
+        for (int i = 0; i < V; i++)
         {
             pai[i] = i;
             tamanho[i] = 1;
