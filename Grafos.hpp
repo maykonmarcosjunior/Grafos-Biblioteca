@@ -5,8 +5,10 @@
 #include <string>
 #include <queue>
 #include <stack>
-#include <list>
 #include <vector>
+#include <list>
+#include <set>
+#include <deque>
 #include <map>
 #include <algorithm>
 #include <numeric>
@@ -115,6 +117,23 @@ private:
             }
         }
         return Ciclo;
+    }
+
+    // função auxiliar para realizar a DFS
+    void DFS_Visit_OT(int v, std::vector<bool> &conhecidos,
+                      std::deque<int> &ordem)
+    {
+        conhecidos[v - 1] = true;
+
+        for (int u : this->vizinhos(v))
+        {
+            if (!conhecidos[u - 1])
+            {
+                DFS_Visit_OT(u, conhecidos, ordem);
+            }
+        }
+
+        ordem.push_front(v);
     }
 
 public:
@@ -578,128 +597,60 @@ public:
         return AT;
     }
 
-    std::vector<int> ordenacao_topologica()
+    // implementação do algoritmo de ordenação topológica usando DFS
+    std::deque<int> ordenacao_topologica()
     {
-        std::vector<int> ordem;
-        std::queue<int> fila;
+        int V = qtdVertices();
+        std::deque<int> ordem;
+        std::vector<bool> conhecidos(V, false);
 
-        // inicializa o vetor de graus de entrada
-        std::vector<int> grau_de_entrada(qtdVertices(), 0);
-        for (int i = 1; i <= qtdVertices(); i++)
+        for (int v = 1; v <= V; v++)
         {
-            for (std::size_t j = 0; j < vizinhos(i).size(); j++)
+            if (!conhecidos[v - 1])
             {
-                int v = vizinhos(i)[j];
-                grau_de_entrada[v - 1]++;
+                DFS_Visit_OT(v, conhecidos, ordem);
             }
-        }
-
-        // insere na fila os vértices com grau de entrada zero
-        for (int i = 0; i < qtdVertices(); i++)
-        {
-            if (grau_de_entrada[i] == 0)
-            {
-                fila.push(i + 1);
-            }
-        }
-
-        // processa a fila
-        while (!fila.empty())
-        {
-            int v = fila.front();
-            fila.pop();
-            ordem.push_back(v);
-
-            // decrementa o grau de entrada dos vizinhos de v
-            for (std::size_t i = 0; i < vizinhos(v).size(); i++)
-            {
-                int u = vizinhos(v)[i];
-                grau_de_entrada[u - 1]--;
-                if (grau_de_entrada[u - 1] == 0)
-                {
-                    fila.push(u);
-                }
-            }
-        }
-
-        // verifica se houve ciclo
-        if (static_cast<int>(ordem.size()) != qtdVertices())
-        {
-            std::cerr << "O grafo contém um ciclo!";
-            ordem.clear();
         }
         return ordem;
     }
 
-    // função auxiliar para encontrar o pai de um conjunto disjunto
-    int encontrar_pai(std::vector<int> &pai, int u)
-    {
-        std::cout << "u = " << u << std::endl;
-        if (pai.at(u - 1) == u)
-        {
-            return u;
-        }
-        return pai.at(u - 1) = encontrar_pai(pai, pai.at(u - 1));
-    }
-
     // implementação do algoritmo de Kruskal para encontrar a árvore geradora mínima do grafo
-    std::vector<std::vector<int>> Kruskal()
+    std::vector<Arco> Kruskal()
     {
         int V = qtdVertices();
-        std::vector<std::vector<int>> saida;
-        std::vector<std::pair<int, std::pair<int, int>>> arvore_geradora_minima;
-        std::vector<std::pair<int, std::pair<int, int>>> arestas;
-
-        // cria um vetor com todas as arestas do grafo
-        for (int i = 1; i <= V; i++)
+        std::vector<Arco> arvore_geradora_minima;
+        std::vector<std::set<int>> S(V);
+        for (int v = 0; v < V; v++)
         {
-            for (std::size_t j = 0; j < this->vizinhos(i).size(); j++)
-            {
-                int v = this->vizinhos(i)[j];
-                int peso = this->peso(i, v);
-                arestas.push_back(std::make_pair(peso, std::make_pair(i, v)));
-            }
+            S[v].insert(v);
         }
 
         // ordena as arestas em ordem crescente de peso
-        std::sort(arestas.begin(), arestas.end());
-
-        // inicializa a estrutura de conjuntos disjuntos
-        std::vector<int> pai(V);
-        std::vector<int> tamanho(V);
-        for (int i = 0; i < V; i++)
-        {
-            pai[i] = i;
-            tamanho[i] = 1;
-        }
+        std::sort(arcos.begin(), arcos.end());
 
         // processa as arestas em ordem crescente de peso
-        for (std::size_t i = 0; i < arestas.size(); i++)
+        for (std::size_t i = 0; i < arcos.size(); i++)
         {
-            int peso = arestas[i].first;
-            int u = arestas[i].second.first;
-            int v = arestas[i].second.second;
+            int u = arcos[i].u;
+            int v = arcos[i].v;
 
             // verifica se u e v estão em conjuntos disjuntos
-            int pai_u = encontrar_pai(pai, u);
-            int pai_v = encontrar_pai(pai, v);
-            if (pai_u != pai_v)
+            if (S[u - 1] != S[v - 1])
             {
                 // une os conjuntos disjuntos
-                if (tamanho[pai_u] < tamanho[pai_v])
+                std::set<int> X = S[u - 1];
+                X.insert(S[v - 1].begin(), S[v - 1].end());
+                for (int y : X)
                 {
-                    std::swap(pai_u, pai_v);
+                    S[y] = X;
                 }
-                pai[pai_v] = pai_u;
-                tamanho[pai_u] += tamanho[pai_v];
 
                 // adiciona a aresta na árvore geradora mínima
-                arvore_geradora_minima.push_back(std::make_pair(peso, std::make_pair(u, v)));
+                arvore_geradora_minima.push_back(arcos[i]);
             }
         }
 
-        // return arvore_geradora_minima;
-        return saida;
+        return arvore_geradora_minima;
     }
 
     // implementação do algoritmo de Prim para encontrar a árvore geradora mínima do grafo

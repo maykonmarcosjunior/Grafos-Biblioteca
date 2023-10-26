@@ -1,9 +1,8 @@
 #include <iostream>
 #include "Grafos.hpp"
 
-void busca_em_largura(std::string arquivo_do_grafo, int start)
+void busca_em_largura(Grafo &G, int start = 1)
 {
-    Grafo G = Grafo(arquivo_do_grafo);
     std::vector<std::string> resultado = G.busca_em_largura(start);
     for (std::string i : resultado)
     {
@@ -11,9 +10,8 @@ void busca_em_largura(std::string arquivo_do_grafo, int start)
     }
 }
 
-void ciclo_euleriano(std::string arquivo_do_grafo)
+void ciclo_euleriano(Grafo &G)
 {
-    Grafo G = Grafo(arquivo_do_grafo);
     std::list<int> resultado = G.cicloEuleriano();
     if (resultado.size())
     {
@@ -30,9 +28,8 @@ void ciclo_euleriano(std::string arquivo_do_grafo)
     }
 }
 
-void bellman_ford(std::string arquivo_do_grafo, int start)
+void bellman_ford(Grafo &G, int start)
 {
-    Grafo G = Grafo(arquivo_do_grafo);
     std::string resultado = G.bellman_ford(start);
     if (resultado.size() > 0)
     {
@@ -44,9 +41,8 @@ void bellman_ford(std::string arquivo_do_grafo, int start)
     }
 }
 
-void dijkstra(std::string arquivo_do_grafo, int start)
+void dijkstra(Grafo &G, int start)
 {
-    Grafo G = Grafo(arquivo_do_grafo);
     std::string resultado = G.dijkstra(start);
     if (resultado.size() > 0)
     {
@@ -58,9 +54,8 @@ void dijkstra(std::string arquivo_do_grafo, int start)
     }
 }
 
-void floyd_warshall(std::string arquivo_do_grafo)
+void floyd_warshall(Grafo &G)
 {
-    Grafo G = Grafo(arquivo_do_grafo);
     auto distancias = G.floyd_warshall();
     for (std::size_t i = 0; i < distancias.size(); ++i)
     {
@@ -73,9 +68,8 @@ void floyd_warshall(std::string arquivo_do_grafo)
     }
 }
 
-void componentes_fortemente_conexas(std::string arquivo_do_grafo)
+void componentes_fortemente_conexas(Grafo &G)
 {
-    Grafo G = Grafo(arquivo_do_grafo);
     std::vector<int> resultado = G.componentes_fortemente_conexas();
     for (std::size_t i = 0; i < resultado.size(); ++i)
     {
@@ -84,38 +78,33 @@ void componentes_fortemente_conexas(std::string arquivo_do_grafo)
     std::cout << '\n';
 }
 
-void ordenacao_topologica(std::string arquivo_do_grafo)
+void ordenacao_topologica(Grafo &G)
 {
-    Grafo G = Grafo(arquivo_do_grafo);
-    std::vector<int> resultado = G.ordenacao_topologica();
-    for (std::size_t i = 0; i < resultado.size(); ++i)
+    std::deque<int> resultado = G.ordenacao_topologica();
+    for (std::size_t i = 0; i < resultado.size() - 1; ++i)
     {
-        std::cout << G.rotulo(resultado[i]) << "→";
+        std::cout << G.rotulo(resultado[i]) << " → ";
     }
-    std::cout << ".\n";
+    std::cout << G.rotulo(resultado.back()) << ".\n";
 }
 
-void Prim(std::string arquivo_do_grafo)
+void Kruskal(Grafo &G)
 {
-    Grafo G = Grafo(arquivo_do_grafo);
-
-    std::vector<std::vector<int>> resultado = G.Prim();
+    auto resultado = G.Kruskal();
     int soma = 0;
-    std::string arestas;
+    std::string arestas = "";
     for (std::size_t i = 0; i < resultado.size(); ++i)
     {
-        arestas += resultado[i][0] + '-' + resultado[i][1] + ", ";
-        soma += resultado[i][2];
+        arestas += std::to_string(resultado[i].u) + "-" + std::to_string(resultado[i].v) + ", ";
+        soma += resultado[i].peso;
     }
     std::cout << soma << '\n';
     std::cout << arestas << '\n';
 }
 
-void Kruskal(std::string arquivo_do_grafo)
+void Prim(Grafo &G)
 {
-    Grafo G = Grafo(arquivo_do_grafo);
-
-    std::vector<std::vector<int>> resultado = G.Kruskal();
+    std::vector<std::vector<int>> resultado = G.Prim();
     int soma = 0;
     std::string arestas;
     for (std::size_t i = 0; i < resultado.size(); ++i)
@@ -135,26 +124,26 @@ int main(int argc, char **argv)
         return 1;
     }
     std::string nome_do_arquivo = argv[1];
+    Grafo G = Grafo(nome_do_arquivo);
     /*
-    int start = 1;
     std::cout << "Busca em Largura\n";
-    busca_em_largura(nome_do_arquivo, start);
+    busca_em_largura(G);
     std::cout << "\nCiclo Euleriano\n";
-    ciclo_euleriano(nome_do_arquivo);
+    ciclo_euleriano(G);
     std::cout << "\nBellman Ford\n";
-    bellman_ford(nome_do_arquivo, start);
+    bellman_ford(G);
     std::cout << "\nDijkstra\n";
-    dijkstra(nome_do_arquivo, start);
+    dijkstra(G);
     std::cout << "\nFloyd Warshall\n";
-    floyd_warshall(nome_do_arquivo);
+    floyd_warshall(G);
     */
     std::cout << "\nComponentes Fortemente Conexas\n";
-    componentes_fortemente_conexas(nome_do_arquivo);
+    componentes_fortemente_conexas(G);
     std::cout << "\nOrdenacao Topologica\n";
-    ordenacao_topologica(nome_do_arquivo);
+    ordenacao_topologica(G);
     std::cout << "\nKruskal\n";
-    Kruskal(nome_do_arquivo);
-    std::cout << "\nPrim\n";
-    Prim(nome_do_arquivo);
+    Kruskal(G);
+    // std::cout << "\nPrim\n";
+    // Prim(G);
     return 0;
 }
