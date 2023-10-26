@@ -1,0 +1,11 @@
+[
+    {
+        "label": "resposta_1",
+        "kind": 2,
+        "importPath": "Testes.maykon",
+        "description": "Testes.maykon",
+        "peekOfCode": "def resposta_1(grafo):\n    predecessors = grafo.DFS_CFC()\n    S = [[i] for i in range(grafo.qtdVertices())]\n    for v in range(grafo.qtdVertices()):\n        if predecessors[v] != -1:\n            a = [y for x in [S[v], S[predecessors[v]]] for y in x]\n            for i in a:\n                S[i] = a\n    output = []\n    for row in S:",
+        "detail": "Testes.maykon",
+        "documentation": {}
+    }
+]
