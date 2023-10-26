@@ -37,13 +37,53 @@ private:
         }
     };
 
+    // para o algoritmo de Kruskal
+    struct cd_Elemento
+    {
+        cd_Elemento *pai;
+        int rank;
+        cd_Elemento()
+        {
+            pai = this;
+            rank = 0;
+        }
+
+        void ligar(cd_Elemento *x, cd_Elemento *y)
+        {
+            if (x->rank > y->rank)
+            {
+                y->pai = x;
+            }
+            else
+            {
+                x->pai = y;
+                if (x->rank == y->rank)
+                {
+                    y->rank++;
+                }
+            }
+        }
+
+        cd_Elemento *encontrar(cd_Elemento *x)
+        {
+            if (x->pai != x)
+            {
+                x->pai = encontrar(x->pai);
+            }
+            return x->pai;
+        }
+        void uniao(cd_Elemento *x, cd_Elemento *y)
+        {
+            ligar(encontrar(x), encontrar(y));
+        }
+    };
+
     // vetor com todos os vértices
     std::vector<Vertice> vertices;
     // vetor com todos os arcos
     std::vector<Arco> arcos;
     // matriz de vizinhosacencia
-    using Matriz_float = std::vector<std::vector<float>>;
-    Matriz_float matriz;
+    std::vector<std::vector<float>> matriz;
 
     // obtém o caminho feito pelo bellman-ford
     std::vector<int> get_path(int start, int end, std::vector<int> &ancestrais)
@@ -67,7 +107,9 @@ private:
         return path;
     }
 
-    std::list<int> buscarSubCicloEuleriano(int v, std::map<Arco, bool> &C)
+    std::list<int> buscarSubCicloEuleriano(int v,
+                                           std::map<Arco,
+                                                    bool> &C)
     {
         std::list<int> Ciclo = {v};
         int origem = v;
@@ -619,10 +661,11 @@ public:
     {
         int V = qtdVertices();
         std::vector<Arco> arvore_geradora_minima;
-        std::vector<std::set<int>> S(V);
+        std::vector<cd_Elemento *> S(V);
         for (int v = 0; v < V; v++)
         {
-            S[v].insert(v);
+            cd_Elemento *x = new cd_Elemento();
+            S[v] = x;
         }
 
         // ordena as arestas em ordem crescente de peso
@@ -631,23 +674,23 @@ public:
         // processa as arestas em ordem crescente de peso
         for (std::size_t i = 0; i < arcos.size(); i++)
         {
-            int u = arcos[i].u;
-            int v = arcos[i].v;
+            auto x = S[arcos[i].u - 1];
+            auto y = S[arcos[i].v - 1];
 
             // verifica se u e v estão em conjuntos disjuntos
-            if (S[u - 1] != S[v - 1])
+            if (x->pai != y->pai)
             {
                 // une os conjuntos disjuntos
-                std::set<int> X = S[u - 1];
-                X.insert(S[v - 1].begin(), S[v - 1].end());
-                for (int y : X)
-                {
-                    S[y] = X;
-                }
+                x->uniao(x, y);
 
                 // adiciona a aresta na árvore geradora mínima
                 arvore_geradora_minima.push_back(arcos[i]);
             }
+        }
+
+        for (int v = 0; v < V; v++)
+        {
+            delete S[v];
         }
 
         return arvore_geradora_minima;
