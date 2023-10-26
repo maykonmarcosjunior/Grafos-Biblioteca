@@ -758,6 +758,93 @@ public:
         // return arvore_geradora_minima;
         return saida;
     }
+    /*
+        // função auxiliar para realizar a busca em largura na rede residual
+        std::vector<int> busca_em_largura_ek(Grafo &Gf, int s, int t)
+        {
+            std::vector<bool> conhecidos(Gf.qtdVertices(), false);
+            std::vector<int> ancestrais(Gf.qtdVertices(), -1);
+            std::queue<int> Q;
+
+            conhecidos[s] = true;
+            Q.push(s);
+
+            while (!Q.empty())
+            {
+                int u = Q.front();
+                Q.pop();
+
+                for (int v : Gf.vizinhos(u))
+                {
+                    if (!conhecidos[v] && Gf.peso(u, v) > 0)
+                    {
+                        conhecidos[v] = true;
+                        ancestrais[v] = u;
+
+                        if (v == t)
+                        {
+                            // encontrou um caminho aumentante
+                            std::vector<int> caminho;
+                            int w = t;
+                            while (w != s)
+                            {
+                                caminho.push_back(w);
+                                w = ancestrais[w];
+                            }
+                            caminho.push_back(s);
+                            std::reverse(caminho.begin(), caminho.end());
+                            return caminho;
+                        }
+
+                        Q.push(v);
+                    }
+                }
+            }
+
+            // não encontrou caminho aumentante
+            return std::vector<int>();
+        }
+
+        int Edmonds_Karp(int s, int v)
+        {
+            // cria a rede residual
+            Grafo Gf = this->rede_residual();
+
+            // inicializa o fluxo máximo
+            int F = 0;
+
+            // busca caminhos aumentantes na rede residual
+            std::vector<int> p = busca_em_largura_ek(Gf, s, t);
+            while (!p.empty())
+            {
+                // encontra o fluxo do caminho aumentante
+                int fp = MAX;
+                for (int i = 0; i < p.size() - 1; i++)
+                {
+                    int u = p[i];
+                    int v = p[i + 1];
+                    fp = std::min(fp, Gf.peso(u, v));
+                }
+
+                // atualiza o fluxo máximo
+                F += fp;
+
+                // atualiza a rede residual
+                for (int i = 0; i < p.size() - 1; i++)
+                {
+                    int u = p[i];
+                    int v = p[i + 1];
+                    Gf.atualiza_peso(u, v, -fp);
+                    Gf.atualiza_peso(v, u, fp);
+                }
+
+                // busca o próximo caminho aumentante
+                p = busca_em_largura_ek(Gf, s, t);
+            }
+
+            return F;
+        }
+    */
 }; // Grafos
 
 #endif // GRAFOS_HPP
