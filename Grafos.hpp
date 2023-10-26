@@ -3,15 +3,16 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <queue>
-#include <stack>
 #include <vector>
-#include <list>
-#include <set>
 #include <deque>
-#include <map>
 #include <algorithm>
 #include <numeric>
+#include <queue>
+// #include <stack>
+// ciclo euleriano
+#include <list>
+#include <map>
+
 #define MAX 2147483647
 class Grafo
 {
@@ -84,28 +85,6 @@ private:
     std::vector<Arco> arcos;
     // matriz de vizinhosacencia
     std::vector<std::vector<float>> matriz;
-
-    // obtém o caminho feito pelo bellman-ford
-    std::vector<int> get_path(int start, int end, std::vector<int> &ancestrais)
-    {
-        std::vector<int> path;
-
-        // Se não for possível chegar ao destino
-        // a partir da origem, retorne um caminho vazio
-        if (ancestrais[end - 1] == -1 && start != end)
-            return path;
-
-        // Vá de trás para frente para construir o caminho
-        // Vá de trás para frente para construir o caminho
-        int current = end;
-        while (current != -1 && current != start)
-        {
-            path.insert(path.begin(), current);
-            current = ancestrais[current - 1];
-        }
-        path.insert(path.begin(), start); // incluir o vértice de início
-        return path;
-    }
 
     std::list<int> buscarSubCicloEuleriano(int v,
                                            std::map<Arco,
@@ -410,7 +389,22 @@ public:
         for (int i = 1; i <= V; ++i)
         {
             saida += std::to_string(i) + ": ";
-            std::vector<int> path = get_path(s, i, ancestrais);
+            std::vector<int> path;
+            // Se não for possível chegar ao destino
+            // a partir da origem, retorne um caminho vazio
+            if (!(ancestrais[i - 1] == -1 && s != i))
+            {
+                // Vá de trás para frente para construir o caminho
+                // Vá de trás para frente para construir o caminho
+                int current = i;
+                while (current != -1 && current != s)
+                {
+                    path.insert(path.begin(), current);
+                    current = ancestrais[current - 1];
+                }
+                // incluir o vértice de início
+                path.insert(path.begin(), s);
+            }
             for (size_t j = 0; j < path.size(); ++j)
             {
                 saida += std::to_string(path[j]);
@@ -464,7 +458,23 @@ public:
         for (int i = 1; i <= V; ++i)
         {
             saida += std::to_string(i) + ": ";
-            std::vector<int> path = get_path(s, i, pred);
+            std::vector<int> path;
+
+            // Se não for possível chegar ao destino
+            // a partir da origem, retorne um caminho vazio
+            if (!(pred[i - 1] == -1 && s != i))
+            {
+                // Vá de trás para frente para construir o caminho
+                // Vá de trás para frente para construir o caminho
+                int current = i;
+                while (current != -1 && current != s)
+                {
+                    path.insert(path.begin(), current);
+                    current = pred[current - 1];
+                }
+                // incluir o vértice de início
+                path.insert(path.begin(), s);
+            }
             for (size_t j = 0; j < path.size(); ++j)
             {
                 saida += std::to_string(path[j]);
