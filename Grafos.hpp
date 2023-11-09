@@ -844,6 +844,16 @@ public:
 
             return F;
         }
+
+        int HopcroftKarp()
+        {
+            return 0;
+        }
+
+        int ColoracaoVertices()
+        {
+            return 0;
+        }
     */
 }; // Grafos
 

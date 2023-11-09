@@ -116,6 +116,37 @@ void Prim(Grafo &G)
     std::cout << arestas << '\n';
 }
 
+// Ao final, imprima na tela o valor do fluxo
+// máximo resultante da execução do algoritmo
+// de Edmonds-Karp.
+void EdmondsKarp(Grafo &G)
+{
+    // int resultado = G.EdmondsKarp();
+    // std::cout << resultado << '\n';
+}
+
+// Crie um programa que receba um arquivo de grafo bipartido,
+// não-dirigido, não-ponderado e informe qual o valor do
+// emparelhamento máximo e quais arestas pertencem a ele.
+// Utilize o algoritmo de HopcroftKarp.
+
+void HopcroftKarp(Grafo &G)
+{
+    // int resultado = G.HopcroftKarp();
+    // std::cout << resultado << '\n';
+}
+
+//[Coloração de Vértices] (2,5pts) Crie um programa que
+// recebe um grafo não-dirigido e não-ponderado como argumento.
+// Ao final, informe a coloração m´ınima e qual número cromático
+// foi utilizado em cada vértice
+
+void ColoracaoVertices(Grafo &G)
+{
+    // int resultado = G.ColoracaoVertices();
+    // std::cout << resultado << '\n';
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 2)
