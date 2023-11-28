@@ -121,37 +121,35 @@ void Prim(Grafo &G)
 // de Edmonds-Karp.
 void EdmondsKarp(Grafo &G)
 {
-    // int resultado = G.EdmondsKarp();
-    // std::cout << resultado << '\n';
+    float resultado = G.EdmondsKarp(1, G.qtdVertices() - 1);
+    std::cout << resultado << '\n';
 }
 
 // Crie um programa que receba um arquivo de grafo bipartido,
 // não-dirigido, não-ponderado e informe qual o valor do
 // emparelhamento máximo e quais arestas pertencem a ele.
 // Utilize o algoritmo de HopcroftKarp.
-
 void HopcroftKarp(Grafo &G)
 {
-    // int resultado = G.HopcroftKarp();
-    // std::cout << resultado << '\n';
+    auto resultado = G.HopcroftKarp();
+    std::cout << resultado << '\n';
 }
 
-//[Coloração de Vértices] (2,5pts) Crie um programa que
-// recebe um grafo não-dirigido e não-ponderado como argumento.
-// Ao final, informe a coloração m´ınima e qual número cromático
-// foi utilizado em cada vértice
-
+// Crie um programa que recebe um grafo não-
+// dirigido e não-ponderado como argumento.
+// Ao final, informe a coloração mínima e qual
+// número cromático foi utilizado em cada vértice.
 void ColoracaoVertices(Grafo &G)
 {
-    // int resultado = G.ColoracaoVertices();
-    // std::cout << resultado << '\n';
+    auto resultado = G.ColoracaoVertices();
+    std::cout << resultado << '\n';
 }
 
 int main(int argc, char **argv)
 {
     if (argc != 2)
     {
-        std::cout << "Erro, voce deve digitar" << argv[0] << "<nome-do-arquivo>\n";
+        std::cout << "Erro, voce deve digitar " << argv[0] << " <nome-do-arquivo>\n";
         return 1;
     }
     std::string nome_do_arquivo = argv[1];
@@ -167,7 +165,6 @@ int main(int argc, char **argv)
     dijkstra(G);
     std::cout << "\nFloyd Warshall\n";
     floyd_warshall(G);
-    */
     std::cout << "\nComponentes Fortemente Conexas\n";
     componentes_fortemente_conexas(G);
     std::cout << "\nOrdenacao Topologica\n";
@@ -176,5 +173,8 @@ int main(int argc, char **argv)
     Kruskal(G);
     // std::cout << "\nPrim\n";
     // Prim(G);
+    */
+    std::cout << "\nEdmonds Karp\n";
+    EdmondsKarp(G);
     return 0;
 }

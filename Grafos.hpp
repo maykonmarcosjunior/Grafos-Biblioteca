@@ -14,6 +14,7 @@
 #include <map>
 
 #define MAX 2147483647
+
 class Grafo
 {
 private:
@@ -83,12 +84,10 @@ private:
     std::vector<Vertice> vertices;
     // vetor com todos os arcos
     std::vector<Arco> arcos;
-    // matriz de vizinhosacencia
+    // matriz de vizinhos/adjacência
     std::vector<std::vector<float>> matriz;
 
-    std::list<int> buscarSubCicloEuleriano(int v,
-                                           std::map<Arco,
-                                                    bool> &C)
+    std::list<int> buscarSubCicloEuleriano(int v, std::map<Arco, bool> &C)
     {
         std::list<int> Ciclo = {v};
         int origem = v;
@@ -155,6 +154,85 @@ private:
         }
 
         ordem.push_front(v);
+    }
+
+    void DFSVisitAdaptado(int s,
+                          int &tempo,
+                          std::vector<int> &Conhecidos,
+                          std::vector<int> &Inicio,
+                          std::vector<int> &Ancestrais,
+                          std::vector<int> &Final,
+                          std::vector<std::vector<int>> &vizinhosT)
+    {
+        Conhecidos.at(s - 1) = 1;
+        tempo++;
+        Inicio.at(s - 1) = tempo;
+
+        for (int u : vizinhosT.at(s - 1))
+        { // ajustando para 0-indexado
+            if (!Conhecidos.at(u - 1))
+            { // ajustando para 0-indexado
+                Ancestrais.at(u - 1) = s;
+                DFSVisitAdaptado(u, tempo,
+                                 Conhecidos,
+                                 Inicio,
+                                 Ancestrais,
+                                 Final,
+                                 vizinhosT);
+            }
+        }
+        tempo++;
+        Final.push_back(tempo);
+    }
+
+    std::vector<int> DFSAdaptado(const std::vector<int> &ordem,
+                                 std::vector<std::vector<int>> &vizinhosT)
+    {
+        int V = qtdVertices();
+        std::vector<int> Conhecidos(V, 0);
+        std::vector<int> Inicio(V, -1);
+        std::vector<int> Ancestrais(V, -1);
+        std::vector<int> Final;
+
+        int tempo = 0;
+
+        for (int idx : ordem)
+        {
+            if (!Conhecidos.at(idx - 1))
+            {
+                DFSVisitAdaptado(idx, tempo,
+                                 Conhecidos,
+                                 Inicio,
+                                 Ancestrais,
+                                 Final,
+                                 vizinhosT);
+            }
+        }
+        return Ancestrais;
+    }
+
+    void DFSVisit(int s,
+                  int &tempo,
+                  std::vector<int> &Conhecidos,
+                  std::vector<int> &Inicio,
+                  std::vector<int> &Ancestrais,
+                  std::vector<int> &Final)
+    {
+        Conhecidos[s - 1] = 1;
+        tempo++;
+        Inicio[s - 1] = tempo;
+
+        for (int u : vizinhos(s))
+        { // ajustando para 0-indexado
+            if (!Conhecidos.at(u - 1))
+            { // ajustando para 0-indexado
+                Ancestrais.at(u - 1) = s;
+                DFSVisit(u, tempo, Conhecidos,
+                         Inicio, Ancestrais, Final);
+            }
+        }
+        tempo++;
+        Final.push_back(tempo);
     }
 
 public:
@@ -254,7 +332,6 @@ public:
     {
         return matriz[u - 1][v - 1];
     }
-
     // printa a arvore de busca em largura
     // onde cada posição corresponde a um
     // nível da arvore
@@ -314,6 +391,161 @@ public:
         {
             saida.pop_back();
         }
+        return saida;
+    }
+
+    std::vector<std::vector<int>> DFS()
+    {
+        int V = qtdVertices();
+        std::vector<int> Conhecidos(V, 0);
+        std::vector<int> Inicio(V, -1);
+        std::vector<int> Ancestrais(V, -1);
+        std::vector<int> Final;
+
+        int tempo = 0;
+
+        for (int u = 1; u <= V; u++)
+        {
+            if (!Conhecidos[u - 1])
+            {
+                DFSVisit(u, tempo, Conhecidos,
+                         Inicio, Ancestrais, Final);
+            }
+        }
+        std::vector<std::vector<int>> saida;
+        saida.push_back(Conhecidos);
+        saida.push_back(Inicio);
+        saida.push_back(Ancestrais);
+        saida.push_back(Final);
+        return saida;
+    }
+
+    std::vector<int> componentes_fortemente_conexas()
+    {
+        std::vector<std::vector<int>> dfs = DFS();
+        std::vector<int> F = dfs[3];
+
+        std::vector<std::vector<int>> vizinhosTranspostos(qtdVertices());
+        // Inverte a ordem dos arcos para criar a lista de arcos transposta
+        for (const Arco &arco : arcos)
+        {
+            vizinhosTranspostos[arco.v - 1].push_back(arco.u);
+        }
+        std::vector<int> ordem(F.size());
+        std::iota(ordem.begin(), ordem.end(), 1);
+        std::sort(ordem.begin(), ordem.end(), [&F](int i, int j)
+                  { return F[i] > F[j]; });
+        std::vector<int> AT = DFSAdaptado(ordem, vizinhosTranspostos);
+        return AT;
+    }
+
+    // implementação do algoritmo de ordenação topológica usando DFS
+    std::deque<int> ordenacao_topologica()
+    {
+        int V = qtdVertices();
+        std::deque<int> ordem;
+        std::vector<bool> conhecidos(V, false);
+
+        for (int v = 1; v <= V; v++)
+        {
+            if (!conhecidos[v - 1])
+            {
+                DFS_Visit_OT(v, conhecidos, ordem);
+            }
+        }
+        return ordem;
+    }
+
+    // implementação do algoritmo de Kruskal para encontrar a árvore geradora mínima do grafo
+    std::vector<Arco> Kruskal()
+    {
+        int V = qtdVertices();
+        std::vector<Arco> arvore_geradora_minima;
+        std::vector<cd_Elemento *> S(V);
+        for (int v = 0; v < V; v++)
+        {
+            cd_Elemento *x = new cd_Elemento();
+            S[v] = x;
+        }
+
+        // ordena as arestas em ordem crescente de peso
+        std::sort(arcos.begin(), arcos.end());
+
+        // processa as arestas em ordem crescente de peso
+        for (std::size_t i = 0; i < arcos.size(); i++)
+        {
+            auto x = S[arcos[i].u - 1];
+            auto y = S[arcos[i].v - 1];
+
+            // verifica se u e v estão em conjuntos disjuntos
+            if (x->pai != y->pai)
+            {
+                // une os conjuntos disjuntos
+                x->uniao(x, y);
+
+                // adiciona a aresta na árvore geradora mínima
+                arvore_geradora_minima.push_back(arcos[i]);
+            }
+        }
+
+        for (int v = 0; v < V; v++)
+        {
+            delete S[v];
+        }
+
+        return arvore_geradora_minima;
+    }
+
+    // implementação do algoritmo de Prim para encontrar a árvore geradora mínima do grafo
+    std::vector<std::vector<int>> Prim()
+    {
+        std::vector<std::vector<int>> saida;
+
+        std::vector<std::pair<int, std::pair<int, int>>> arvore_geradora_minima;
+        std::vector<bool> visitado(this->qtdVertices(), false);
+        std::vector<int> distancia(this->qtdVertices(), MAX);
+        std::vector<int> pai(this->qtdVertices(), -1);
+
+        // escolhe o primeiro vértice como raiz da árvore geradora mínima
+        int raiz = 0;
+        distancia[raiz] = 0;
+
+        // processa todos os vértices
+        for (int i = 0; i < this->qtdVertices(); i++)
+        {
+            // encontra o vértice não visitado com menor distância
+            int u = -1;
+            for (int j = 0; j < this->qtdVertices(); j++)
+            {
+                if (!visitado[j] && (u == -1 || distancia[j] < distancia[u]))
+                {
+                    u = j;
+                }
+            }
+
+            // marca o vértice como visitado
+            visitado[u] = true;
+
+            // adiciona a aresta na árvore geradora mínima
+            if (pai[u] != -1)
+            {
+                arvore_geradora_minima.push_back(std::make_pair(distancia[u], std::make_pair(u, pai[u])));
+            }
+
+            // atualiza as distâncias dos vizinhos de u
+            for (std::size_t j = 0; j < this->vizinhos(u).size(); j++)
+            {
+                int v = this->vizinhos(u)[j];
+                int peso = this->peso(u, v);
+                if (!visitado[v] && peso < distancia[v])
+                {
+                    distancia[v] = peso;
+                    pai[v] = u;
+                }
+            }
+        }
+
+        // return arvore_geradora_minima;
         return saida;
     }
 
@@ -525,336 +757,195 @@ public:
         return distancias;
     }
 
-    void DFSVisitAdaptado(int s,
-                          int &tempo,
-                          std::vector<int> &Conhecidos,
-                          std::vector<int> &Inicio,
-                          std::vector<int> &Ancestrais,
-                          std::vector<int> &Final,
-                          std::vector<std::vector<int>> &vizinhosT)
-    {
-        Conhecidos.at(s - 1) = 1;
-        tempo++;
-        Inicio.at(s - 1) = tempo;
-
-        for (int u : vizinhosT.at(s - 1))
-        { // ajustando para 0-indexado
-            if (!Conhecidos.at(u - 1))
-            { // ajustando para 0-indexado
-                Ancestrais.at(u - 1) = s;
-                DFSVisitAdaptado(u, tempo,
-                                 Conhecidos,
-                                 Inicio,
-                                 Ancestrais,
-                                 Final,
-                                 vizinhosT);
-            }
-        }
-        tempo++;
-        Final.push_back(tempo);
-    }
-
-    std::vector<int> DFSAdaptado(const std::vector<int> &ordem,
-                                 std::vector<std::vector<int>> &vizinhosT)
+    // Para o Algoritmo Edmonds-Karp
+    std::vector<int> BuscaEmLarguraEK(int s, int t, std::vector<std::vector<float>> &Gf)
     {
         int V = qtdVertices();
-        std::vector<int> Conhecidos(V, 0);
-        std::vector<int> Inicio(V, -1);
-        std::vector<int> Ancestrais(V, -1);
-        std::vector<int> Final;
-
-        int tempo = 0;
-
-        for (int idx : ordem)
-        {
-            if (!Conhecidos.at(idx - 1))
-            {
-                DFSVisitAdaptado(idx, tempo,
-                                 Conhecidos,
-                                 Inicio,
-                                 Ancestrais,
-                                 Final,
-                                 vizinhosT);
-            }
-        }
-        return Ancestrais;
-    }
-
-    void DFSVisit(int s,
-                  int &tempo,
-                  std::vector<int> &Conhecidos,
-                  std::vector<int> &Inicio,
-                  std::vector<int> &Ancestrais,
-                  std::vector<int> &Final)
-    {
-        Conhecidos[s - 1] = 1;
-        tempo++;
-        Inicio[s - 1] = tempo;
-
-        for (int u : vizinhos(s))
-        { // ajustando para 0-indexado
-            if (!Conhecidos.at(u - 1))
-            { // ajustando para 0-indexado
-                Ancestrais.at(u - 1) = s;
-                DFSVisit(u, tempo, Conhecidos,
-                         Inicio, Ancestrais, Final);
-            }
-        }
-        tempo++;
-        Final.push_back(tempo);
-    }
-
-    std::vector<std::vector<int>> DFS()
-    {
-        int V = qtdVertices();
-        std::vector<int> Conhecidos(V, 0);
-        std::vector<int> Inicio(V, -1);
-        std::vector<int> Ancestrais(V, -1);
-        std::vector<int> Final;
-
-        int tempo = 0;
-
-        for (int u = 1; u <= V; u++)
-        {
-            if (!Conhecidos[u - 1])
-            {
-                DFSVisit(u, tempo, Conhecidos,
-                         Inicio, Ancestrais, Final);
-            }
-        }
-        std::vector<std::vector<int>> saida;
-        saida.push_back(Conhecidos);
-        saida.push_back(Inicio);
-        saida.push_back(Ancestrais);
-        saida.push_back(Final);
-        return saida;
-    }
-
-    std::vector<int> componentes_fortemente_conexas()
-    {
-        std::vector<std::vector<int>> dfs = DFS();
-        std::vector<int> F = dfs[3];
-
-        std::vector<std::vector<int>> vizinhosTranspostos(qtdVertices());
-        // Inverte a ordem dos arcos para criar a lista de arcos transposta
-        for (const Arco &arco : arcos)
-        {
-            vizinhosTranspostos[arco.v - 1].push_back(arco.u);
-        }
-        std::vector<int> ordem(F.size());
-        std::iota(ordem.begin(), ordem.end(), 1);
-        std::sort(ordem.begin(), ordem.end(), [&F](int i, int j)
-                  { return F[i] > F[j]; });
-        std::vector<int> AT = DFSAdaptado(ordem, vizinhosTranspostos);
-        return AT;
-    }
-
-    // implementação do algoritmo de ordenação topológica usando DFS
-    std::deque<int> ordenacao_topologica()
-    {
-        int V = qtdVertices();
-        std::deque<int> ordem;
         std::vector<bool> conhecidos(V, false);
+        std::vector<int> ancestrais(V, -1);
 
-        for (int v = 1; v <= V; v++)
+        conhecidos[s] = true;
+        std::queue<int> Q;
+        Q.push(s);
+
+        while (!Q.empty())
         {
-            if (!conhecidos[v - 1])
+            int u = Q.front();
+            Q.pop();
+
+            for (int v : vertices[u].vizinhos)
             {
-                DFS_Visit_OT(v, conhecidos, ordem);
+                if (!conhecidos[v] && Gf[u][v] > 0)
+                {
+                    conhecidos[v] = true;
+                    ancestrais[v] = u;
+                    if (v == t)
+                    {
+                        std::vector<int> caminho;
+                        for (int w = t; w != s; w = ancestrais[w])
+                        {
+                            caminho.push_back(w);
+                        }
+                        caminho.push_back(s);
+                        std::reverse(caminho.begin(), caminho.end());
+                        return caminho;
+                    }
+                    Q.push(v);
+                }
             }
         }
-        return ordem;
+        return std::vector<int>(); // Caminho não encontrado
     }
 
-    // implementação do algoritmo de Kruskal para encontrar a árvore geradora mínima do grafo
-    std::vector<Arco> Kruskal()
+    float EdmondsKarp(int s, int t)
     {
         int V = qtdVertices();
-        std::vector<Arco> arvore_geradora_minima;
-        std::vector<cd_Elemento *> S(V);
-        for (int v = 0; v < V; v++)
+        // Criando a rede de fluxo Gf a partir do grafo original
+        std::vector<std::vector<float>> Gf(V, std::vector<float>(V, 0));
+        for (auto &arco : arcos)
         {
-            cd_Elemento *x = new cd_Elemento();
-            S[v] = x;
+            // Rede de fluxo direcional
+            Gf[arco.u][arco.v] = arco.peso;
         }
 
-        // ordena as arestas em ordem crescente de peso
-        std::sort(arcos.begin(), arcos.end());
+        float fluxo_maximo = 0;
 
-        // processa as arestas em ordem crescente de peso
-        for (std::size_t i = 0; i < arcos.size(); i++)
+        while (true)
         {
-            auto x = S[arcos[i].u - 1];
-            auto y = S[arcos[i].v - 1];
-
-            // verifica se u e v estão em conjuntos disjuntos
-            if (x->pai != y->pai)
+            std::vector<int> caminho = BuscaEmLarguraEK(s, t, Gf);
+            if (caminho.empty())
             {
-                // une os conjuntos disjuntos
-                x->uniao(x, y);
-
-                // adiciona a aresta na árvore geradora mínima
-                arvore_geradora_minima.push_back(arcos[i]);
+                // Não há mais caminho aumentante
+                break;
             }
+
+            // Encontrar a menor capacidade no caminho
+            float fluxo_caminho = MAX;
+            for (size_t i = 0; i < caminho.size() - 1; ++i)
+            {
+                int u = caminho[i];
+                int v = caminho[i + 1];
+                fluxo_caminho = std::min(fluxo_caminho, Gf[u][v]);
+            }
+
+            // Atualizar a rede de fluxo e o fluxo reverso
+            for (size_t i = 0; i < caminho.size() - 1; ++i)
+            {
+                int u = caminho[i];
+                int v = caminho[i + 1];
+                Gf[u][v] -= fluxo_caminho;
+                Gf[v][u] += fluxo_caminho;
+            }
+
+            fluxo_maximo += fluxo_caminho;
         }
 
-        for (int v = 0; v < V; v++)
-        {
-            delete S[v];
-        }
-
-        return arvore_geradora_minima;
+        return fluxo_maximo;
     }
 
-    // implementação do algoritmo de Prim para encontrar a árvore geradora mínima do grafo
-    std::vector<std::vector<int>> Prim()
+    int HopcroftKarp()
     {
-        std::vector<std::vector<int>> saida;
-
-        std::vector<std::pair<int, std::pair<int, int>>> arvore_geradora_minima;
-        std::vector<bool> visitado(this->qtdVertices(), false);
-        std::vector<int> distancia(this->qtdVertices(), MAX);
-        std::vector<int> pai(this->qtdVertices(), -1);
-
-        // escolhe o primeiro vértice como raiz da árvore geradora mínima
-        int raiz = 0;
-        distancia[raiz] = 0;
-
-        // processa todos os vértices
-        for (int i = 0; i < this->qtdVertices(); i++)
+        return 0;
+    }
+    // Função auxiliar para verificar se um conjunto é um clique independente
+    bool ehCliqueIndependente(const std::vector<int> &conjunto, const std::vector<std::vector<int>> &adj)
+    {
+        for (int v : conjunto)
         {
-            // encontra o vértice não visitado com menor distância
-            int u = -1;
-            for (int j = 0; j < this->qtdVertices(); j++)
+            for (int u : conjunto)
             {
-                if (!visitado[j] && (u == -1 || distancia[j] < distancia[u]))
+                if (v != u && std::find(adj[v].begin(), adj[v].end(), u) != adj[v].end())
                 {
-                    u = j;
+                    return false; // v e u são adjacentes, então não é um clique independente
+                }
+            }
+        }
+        return true;
+    }
+
+    // Função para encontrar todos os CIMs no vetor de adjacências
+    std::vector<std::vector<int>> encontraCIMs(const std::vector<std::vector<int>> &adj)
+    {
+        int n = adj.size();
+        std::vector<std::vector<int>> cims;
+        std::vector<int> conjunto;
+
+        // Gera todos os subconjuntos possíveis de vértices
+        for (int i = 1; i < (1 << n); ++i)
+        {
+            conjunto.clear();
+            for (int j = 0; j < n; ++j)
+            {
+                if (i & (1 << j))
+                {
+                    conjunto.push_back(j);
                 }
             }
 
-            // marca o vértice como visitado
-            visitado[u] = true;
-
-            // adiciona a aresta na árvore geradora mínima
-            if (pai[u] != -1)
+            // Verifica se o conjunto atual é um clique independente e se é máximo
+            if (ehCliqueIndependente(conjunto, adj))
             {
-                arvore_geradora_minima.push_back(std::make_pair(distancia[u], std::make_pair(u, pai[u])));
-            }
-
-            // atualiza as distâncias dos vizinhos de u
-            for (std::size_t j = 0; j < this->vizinhos(u).size(); j++)
-            {
-                int v = this->vizinhos(u)[j];
-                int peso = this->peso(u, v);
-                if (!visitado[v] && peso < distancia[v])
+                bool eMaximo = true;
+                for (const auto &cim : cims)
                 {
-                    distancia[v] = peso;
-                    pai[v] = u;
+                    if (std::includes(cim.begin(), cim.end(), conjunto.begin(), conjunto.end()))
+                    {
+                        eMaximo = false;
+                        break;
+                    }
+                }
+                if (eMaximo)
+                {
+                    cims.push_back(conjunto);
                 }
             }
         }
 
-        // return arvore_geradora_minima;
-        return saida;
+        return cims;
     }
-    /*
-        // função auxiliar para realizar a busca em largura na rede residual
-        std::vector<int> busca_em_largura_ek(Grafo &Gf, int s, int t)
+    int ColoracaoVertices()
+    {
+        int n = vertices.size();
+        int numSubconjuntos = 1 << n; // 2^n subconjuntos
+        std::vector<int> X(numSubconjuntos, std::numeric_limits<int>::max());
+        X[0] = 0;
+
+        // Gerar todos os subconjuntos de vértices
+        for (int s = 1; s < numSubconjuntos; ++s)
         {
-            std::vector<bool> conhecidos(Gf.qtdVertices(), false);
-            std::vector<int> ancestrais(Gf.qtdVertices(), -1);
-            std::queue<int> Q;
+            // Criar vetor de adjacências para o subconjunto s
+            std::vector<std::vector<int>> adjSubconjunto(n);
 
-            conhecidos[s] = true;
-            Q.push(s);
-
-            while (!Q.empty())
+            for (int v = 0; v < n; ++v)
             {
-                int u = Q.front();
-                Q.pop();
-
-                for (int v : Gf.vizinhos(u))
+                if (s & (1 << v))
                 {
-                    if (!conhecidos[v] && Gf.peso(u, v) > 0)
+                    for (int u : vertices[v].vizinhos)
                     {
-                        conhecidos[v] = true;
-                        ancestrais[v] = u;
-
-                        if (v == t)
+                        if (s & (1 << u))
                         {
-                            // encontrou um caminho aumentante
-                            std::vector<int> caminho;
-                            int w = t;
-                            while (w != s)
-                            {
-                                caminho.push_back(w);
-                                w = ancestrais[w];
-                            }
-                            caminho.push_back(s);
-                            std::reverse(caminho.begin(), caminho.end());
-                            return caminho;
+                            adjSubconjunto[v].push_back(u);
                         }
-
-                        Q.push(v);
                     }
                 }
             }
 
-            // não encontrou caminho aumentante
-            return std::vector<int>();
-        }
-
-        int Edmonds_Karp(int s, int v)
-        {
-            // cria a rede residual
-            Grafo Gf = this->rede_residual();
-
-            // inicializa o fluxo máximo
-            int F = 0;
-
-            // busca caminhos aumentantes na rede residual
-            std::vector<int> p = busca_em_largura_ek(Gf, s, t);
-            while (!p.empty())
+            // Para cada clique independente máximo (CIM) em adjSubconjunto
+            for (auto &I : encontraCIMs(adjSubconjunto))
             {
-                // encontra o fluxo do caminho aumentante
-                int fp = MAX;
-                for (int i = 0; i < p.size() - 1; i++)
+                int i = 0;
+                // Calcular índice do subconjunto S sem o CIM I
+                for (int v : I)
                 {
-                    int u = p[i];
-                    int v = p[i + 1];
-                    fp = std::min(fp, Gf.peso(u, v));
+                    i |= (1 << v);
                 }
-
-                // atualiza o fluxo máximo
-                F += fp;
-
-                // atualiza a rede residual
-                for (int i = 0; i < p.size() - 1; i++)
-                {
-                    int u = p[i];
-                    int v = p[i + 1];
-                    Gf.atualiza_peso(u, v, -fp);
-                    Gf.atualiza_peso(v, u, fp);
-                }
-
-                // busca o próximo caminho aumentante
-                p = busca_em_largura_ek(Gf, s, t);
+                i = s & ~i;
+                X[s] = std::min(X[s], X[i] + 1);
             }
-
-            return F;
         }
+        return X[numSubconjuntos - 1];
+    }
 
-        int HopcroftKarp()
-        {
-            return 0;
-        }
-
-        int ColoracaoVertices()
-        {
-            return 0;
-        }
-    */
 }; // Grafos
 
 #endif // GRAFOS_HPP
