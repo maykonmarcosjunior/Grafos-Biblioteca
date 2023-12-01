@@ -802,7 +802,7 @@ public:
         int V = qtdVertices();
         // Criando a rede de fluxo Gf a partir do grafo original
         std::vector<std::vector<float>> Gf(V, std::vector<float>(V, 0));
-        for (auto &arco : arcos)
+        for (Arco &arco : arcos)
         {
             // Rede de fluxo direcional
             Gf[arco.u][arco.v] = arco.peso;
@@ -843,10 +843,83 @@ public:
         return fluxo_maximo;
     }
 
+    bool DFS_HK(std::vector<int> &mate, std::vector<int> &D, int x)
+    {
+        if (x != 0)
+        {
+            for (int y : vizinhos(x))
+            {
+                if (D[mate[y]] == D[x] + 1 && DFS_HK(mate, D, mate[y]))
+                {
+                    mate[y] = x;
+                    mate[x] = y;
+                    return true;
+                }
+            }
+            D[x] = MAX;
+            return false;
+        }
+        return true;
+    }
+
+    bool BFS_HK(std::vector<int> &mate, std::vector<int> &D)
+    {
+        std::queue<int> Q;
+        for (int x = 1; x < qtdVertices(); ++x)
+        { // Começando de 1, pois 0 é o nulo
+            if (mate[x] == 0)
+            {
+                D[x] = 0;
+                Q.push(x);
+            }
+            else
+            {
+                D[x] = MAX;
+            }
+        }
+        D[0] = MAX; // 0 usado como Nulo
+
+        while (!Q.empty())
+        {
+            int x = Q.front();
+            Q.pop();
+
+            if (D[x] < D[0])
+            {
+                for (int y : vizinhos(x))
+                {
+                    if (D[mate[y]] == MAX)
+                    {
+                        D[mate[y]] = D[x] + 1;
+                        Q.push(mate[y]);
+                    }
+                }
+            }
+        }
+        return D[0] != MAX;
+    }
+
     int HopcroftKarp()
     {
-        return 0;
+        int V = qtdVertices();
+        std::vector<int>
+            mate(V + 1, 0);             // Vetor de emparelhamento, inicializado com 0
+        std::vector<int> D(V + 1, MAX); // Vetor de distâncias
+        int m = 0;
+
+        while (BFS_HK(mate, D))
+        {
+            for (int x = 1; x <= V; ++x)
+            { // Começando de 1, pois 0 é o nulo
+                if (mate[x] == 0 && DFS_HK(mate, D, x))
+                {
+                    m++;
+                }
+            }
+        }
+        return m;
     }
+
     // Função auxiliar para verificar se um conjunto é um clique independente
     bool ehCliqueIndependente(const std::vector<int> &conjunto, const std::vector<std::vector<int>> &adj)
     {
