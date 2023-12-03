@@ -943,7 +943,8 @@ public:
             {
                 if (v != u && std::find(adj[v].begin(), adj[v].end(), u) != adj[v].end())
                 {
-                    return false; // v e u são adjacentes, então não é um clique independente
+                    // v e u são adjacentes, então não é um clique independente
+                    return false;
                 }
             }
         }
@@ -990,28 +991,31 @@ public:
 
         return cims;
     }
+
     int ColoracaoVertices()
     {
-        int n = vertices.size();
-        int numSubconjuntos = 1 << n; // 2^n subconjuntos
-        std::vector<int> X(numSubconjuntos, std::numeric_limits<int>::max());
+        int V = qtdVertices();
+        int numSubconjuntos = 1 << V; // 2^n subconjuntos
+        std::vector<int> X(numSubconjuntos, V + 1);
         X[0] = 0;
 
         // Gerar todos os subconjuntos de vértices
         for (int s = 1; s < numSubconjuntos; ++s)
         {
             // Criar vetor de adjacências para o subconjunto s
-            std::vector<std::vector<int>> adjSubconjunto(n);
+            std::vector<std::vector<int>> adjSubconjunto(V);
 
-            for (int v = 0; v < n; ++v)
+            for (int v = 1; v <= V; ++v)
             {
-                if (s & (1 << v))
+                // checa se v está em s
+                if (s & (1 << (v - 1)))
                 {
-                    for (int u : vertices[v].vizinhos)
+                    for (int u : vizinhos(v))
                     {
-                        if (s & (1 << u))
+                        // checa se u está em s
+                        if (s & (1 << (u)))
                         {
-                            adjSubconjunto[v].push_back(u);
+                            adjSubconjunto[v - 1].push_back(u);
                         }
                     }
                 }
@@ -1026,8 +1030,12 @@ public:
                 {
                     i |= (1 << v);
                 }
+                // remove os vértices de I de S
                 i = s & ~i;
-                X[s] = std::min(X[s], X[i] + 1);
+                if (X[i] != MAX)
+                {
+                    X[s] = std::min(X[s], X[i] + 1);
+                }
             }
         }
         return X[numSubconjuntos - 1];

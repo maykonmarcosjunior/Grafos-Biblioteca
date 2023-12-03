@@ -131,7 +131,7 @@ void HopcroftKarp(Grafo &G)
     std::vector<int> X;
     for (int i = 1; i <= G.qtdVertices(); ++i)
     {
-        if (i & 1)
+        if (i % 2)
         {
             X.push_back(i);
         }
@@ -188,7 +188,7 @@ int main(int argc, char **argv)
     EdmondsKarp(G);
     std::cout << "\nHopcroft Karp\n";
     HopcroftKarp(G);
-    // std::cout << "\nColoracao Vertices\n";
-    // ColoracaoVertices(G);
+    std::cout << "\nColoracao Vertices\n";
+    ColoracaoVertices(G);
     return 0;
 }
