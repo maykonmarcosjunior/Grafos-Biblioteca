@@ -128,15 +128,19 @@ void EdmondsKarp(Grafo &G)
 // Utilize o algoritmo de Hopcroft-Karp.
 void HopcroftKarp(Grafo &G)
 {
-    std::vector<int> X;
+    std::vector<int> X, Y;
     for (int i = 1; i <= G.qtdVertices(); ++i)
     {
         if (i % 2)
         {
             X.push_back(i);
         }
+        else
+        {
+            Y.push_back(i);
+        }
     }
-    auto resultado = G.HopcroftKarp(X);
+    auto resultado = G.HopcroftKarp(X, Y);
     std::cout << "emparelhamento = " << resultado.size() << '\n';
     for (auto aresta : resultado)
     {

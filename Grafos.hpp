@@ -235,6 +235,117 @@ private:
         Final.push_back(tempo);
     }
 
+    // Para o Algoritmo Edmonds-Karp
+    std::deque<int> BuscaEmLarguraEK(int s, int t, std::vector<std::vector<float>> &Gf)
+    {
+        int V = qtdVertices();
+        std::vector<bool> conhecidos(V, false);
+        std::vector<int> ancestrais(V, -1);
+
+        conhecidos[s - 1] = true;
+        std::queue<int> Q;
+        Q.push(s);
+
+        while (!Q.empty())
+        {
+            int u = Q.front();
+            Q.pop();
+
+            for (int v : vertices[u - 1].vizinhos)
+            {
+                if (!conhecidos[v - 1] && Gf[u - 1][v - 1] > 0)
+                {
+                    conhecidos[v - 1] = true;
+                    ancestrais[v - 1] = u;
+                    if (v == t)
+                    {
+                        std::deque<int> caminho;
+                        for (int w = t; w != s; w = ancestrais[w - 1])
+                        {
+                            caminho.push_front(w);
+                        }
+                        caminho.push_front(s);
+                        return caminho;
+                    }
+                    Q.push(v);
+                }
+            }
+        }
+        return std::deque<int>(); // Caminho não encontrado
+    }
+
+    bool is_in_Y(std::vector<int> &Y, int v)
+    {
+        for (int y : Y)
+        {
+            if (y == v)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool DFS_HK(std::vector<int> &Y,
+                std::vector<int> &mate,
+                std::vector<int> &D, int x)
+    {
+        if (x != 0)
+        {
+            for (int y : vizinhos(x))
+            {
+                if (is_in_Y(Y, y) && (D[mate[y]] == (D[x] + 1)) &&
+                    DFS_HK(Y, mate, D, mate[y]))
+                {
+                    mate[y] = x;
+                    mate[x] = y;
+                    return true;
+                }
+            }
+            D[x] = MAX;
+            return false;
+        }
+        return true;
+    }
+
+    bool BFS_HK(std::vector<int> &Y, std::vector<int> &mate, std::vector<int> &D)
+    {
+        std::queue<int> Q;
+        for (int x = 1; x < qtdVertices(); ++x)
+        { // Começando de 1, pois 0 é o nulo
+            if (mate[x] == 0)
+            {
+                D[x] = 0;
+                Q.push(x);
+            }
+            else
+            {
+                D[x] = MAX;
+            }
+        }
+        // 0 usado como Nulo
+        D[0] = MAX;
+
+        while (!Q.empty())
+        {
+            int x = Q.front();
+            Q.pop();
+
+            if (D[x] < D[0])
+            {
+                for (int y : vizinhos(x))
+                {
+                    if (is_in_Y(Y, y) && D[mate[y]] == MAX)
+                    {
+                        D[mate[y]] = D[x] + 1;
+                        Q.push(mate[y]);
+                    }
+                }
+            }
+        }
+        return D[0] != MAX;
+    }
+
 public:
     // carrega os vértices e arcos
     // a partir do nome do arquivo
@@ -747,45 +858,6 @@ public:
         return distancias;
     }
 
-    // Para o Algoritmo Edmonds-Karp
-    std::deque<int> BuscaEmLarguraEK(int s, int t, std::vector<std::vector<float>> &Gf)
-    {
-        int V = qtdVertices();
-        std::vector<bool> conhecidos(V, false);
-        std::vector<int> ancestrais(V, -1);
-
-        conhecidos[s - 1] = true;
-        std::queue<int> Q;
-        Q.push(s);
-
-        while (!Q.empty())
-        {
-            int u = Q.front();
-            Q.pop();
-
-            for (int v : vertices[u - 1].vizinhos)
-            {
-                if (!conhecidos[v - 1] && Gf[u - 1][v - 1] > 0)
-                {
-                    conhecidos[v - 1] = true;
-                    ancestrais[v - 1] = u;
-                    if (v == t)
-                    {
-                        std::deque<int> caminho;
-                        for (int w = t; w != s; w = ancestrais[w - 1])
-                        {
-                            caminho.push_front(w);
-                        }
-                        caminho.push_front(s);
-                        return caminho;
-                    }
-                    Q.push(v);
-                }
-            }
-        }
-        return std::deque<int>(); // Caminho não encontrado
-    }
-
     float EdmondsKarp(int s, int t)
     {
         int V = qtdVertices();
@@ -831,90 +903,7 @@ public:
         return fluxo_maximo;
     }
 
-    // Função para bipartir o grafo
-    std::vector<std::vector<int>> bipartirGrafo()
-    {
-        int V = qtdVertices();
-        // Determina o ponto de divisão entre X e Y
-        int meio = V / 2;
-        std::vector<std::vector<int>> adjBipartido(V);
-
-        for (int u = 0; u < V; ++u)
-        {
-            for (int v : vizinhos(u))
-            {
-                if ((u < meio && v >= meio) || (u >= meio && v < meio))
-                {
-                    adjBipartido[u].push_back(v);
-                }
-            }
-        }
-
-        return adjBipartido;
-    }
-
-    bool DFS_HK(std::vector<int> &mate,
-                std::vector<Arco> &emparelhamento,
-                std::vector<int> &D, int x)
-    {
-        if (x != 0)
-        {
-            for (int y : vizinhos(x))
-            {
-                if ((D[mate[y]] == (D[x] + 1)) &&
-                    DFS_HK(mate, emparelhamento, D, mate[y]))
-                {
-                    mate[y] = x;
-                    mate[x] = y;
-                    emparelhamento.push_back({x, y, peso(x, y)});
-                    return true;
-                }
-            }
-            D[x] = MAX;
-            return false;
-        }
-        return true;
-    }
-
-    bool BFS_HK(std::vector<int> &mate, std::vector<int> &D)
-    {
-        std::queue<int> Q;
-        for (int x = 1; x < qtdVertices(); ++x)
-        { // Começando de 1, pois 0 é o nulo
-            if (mate[x] == 0)
-            {
-                D[x] = 0;
-                Q.push(x);
-            }
-            else
-            {
-                D[x] = MAX;
-            }
-        }
-        // 0 usado como Nulo
-        D[0] = MAX;
-
-        while (!Q.empty())
-        {
-            int x = Q.front();
-            Q.pop();
-
-            if (D[x] < D[0])
-            {
-                for (int y : vizinhos(x))
-                {
-                    if (D[mate[y]] == MAX)
-                    {
-                        D[mate[y]] = D[x] + 1;
-                        Q.push(mate[y]);
-                    }
-                }
-            }
-        }
-        return D[0] != MAX;
-    }
-
-    std::vector<Arco> HopcroftKarp(std::vector<int> X)
+    std::vector<Arco> HopcroftKarp(std::vector<int> &X, std::vector<int> &Y)
     {
         int V = qtdVertices();
         // Vetor de emparelhamento, inicializado com 0
@@ -924,74 +913,25 @@ public:
         // arestas emparelhadas
         std::vector<Arco> emparelhamento;
 
-        while (BFS_HK(mate, D))
+        while (BFS_HK(Y, mate, D))
         {
             for (int x : X)
             {
-                DFS_HK(mate, emparelhamento, D, x);
+                DFS_HK(Y, mate, D, x);
+            }
+        }
+        for (int v = 1; v <= V; v += 2)
+        {
+            if (mate[v] != 0)
+            {
+                emparelhamento.push_back({v, mate[v], peso(v, mate[v])});
             }
         }
         return emparelhamento;
     }
 
-    // Função auxiliar para verificar se um conjunto é um clique independente
-    bool ehCliqueIndependente(const std::vector<int> &conjunto, const std::vector<std::vector<int>> &adj)
-    {
-        for (int v : conjunto)
-        {
-            for (int u : conjunto)
-            {
-                if (v != u && std::find(adj[v].begin(), adj[v].end(), u) != adj[v].end())
-                {
-                    // v e u são adjacentes, então não é um clique independente
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    // Função para encontrar todos os CIMs no vetor de adjacências
-    std::vector<std::vector<int>> encontraCIMs(const std::vector<std::vector<int>> &adj)
-    {
-        int n = adj.size();
-        std::vector<std::vector<int>> cims;
-        std::vector<int> conjunto;
-
-        // Gera todos os subconjuntos possíveis de vértices
-        for (int i = 1; i < (1 << n); ++i)
-        {
-            conjunto.clear();
-            for (int j = 0; j < n; ++j)
-            {
-                if (i & (1 << j))
-                {
-                    conjunto.push_back(j);
-                }
-            }
-
-            // Verifica se o conjunto atual é um clique independente e se é máximo
-            if (ehCliqueIndependente(conjunto, adj))
-            {
-                bool eMaximo = true;
-                for (const auto &cim : cims)
-                {
-                    if (std::includes(cim.begin(), cim.end(), conjunto.begin(), conjunto.end()))
-                    {
-                        eMaximo = false;
-                        break;
-                    }
-                }
-                if (eMaximo)
-                {
-                    cims.push_back(conjunto);
-                }
-            }
-        }
-
-        return cims;
-    }
-
+    // retorna a coloração mínima e qual
+    // número cromático foi utilizado em cada vértice.
     int ColoracaoVertices()
     {
         int V = qtdVertices();
@@ -1002,40 +942,96 @@ public:
         // Gerar todos os subconjuntos de vértices
         for (int s = 1; s < numSubconjuntos; ++s)
         {
-            // Criar vetor de adjacências para o subconjunto s
-            std::vector<std::vector<int>> adjSubconjunto(V);
+            // Criar o subconjunto de [indice] s
+            std::vector<int> S;
 
             for (int v = 1; v <= V; ++v)
             {
                 // checa se v está em s
                 if (s & (1 << (v - 1)))
                 {
-                    for (int u : vizinhos(v))
-                    {
-                        // checa se u está em s
-                        if (s & (1 << (u)))
-                        {
-                            adjSubconjunto[v - 1].push_back(u);
-                        }
-                    }
+                    S.push_back(v);
                 }
             }
 
-            // Para cada clique independente máximo (CIM) em adjSubconjunto
-            for (auto &I : encontraCIMs(adjSubconjunto))
+            // Para cada clique independente máximo (CIM) em adj
+            int n = S.size();
+            std::vector<std::vector<int>> cims;
+            std::vector<int> conjunto;
+
+            // Gera todos os subconjuntos possíveis de vértices
+            for (int mask = 1; mask < (1 << n); ++mask)
             {
+                conjunto.clear();
+                for (int i = 0; i < n; ++i)
+                {
+                    if (mask & (1 << i))
+                    {
+                        conjunto.push_back(S[i]);
+                    }
+                }
+
+                // Verifica se o conjunto atual é um clique
+                // independente e se é máximo
+                bool independente = true;
+                for (int v : conjunto)
+                {
+                    for (int u : conjunto)
+                    {
+                        if (v != u && haAresta(u, v))
+                        {
+                            // se v e u são adjacentes,
+                            // então não é um clique independente
+                            independente = false;
+                            break;
+                        }
+                    }
+                    if (!independente)
+                    {
+                        break;
+                    }
+                }
+                if (independente)
+                {
+                    bool eMaximo = true;
+                    for (int v : S)
+                    {
+                        if (std::find(conjunto.begin(), conjunto.end(), v) == conjunto.end())
+                        {
+                            // Testa se adicionar 'v' ao conjunto
+                            // ainda mantém a independência
+                            for (int u : conjunto)
+                            {
+                                if (haAresta(u, v))
+                                {
+                                    eMaximo = false;
+                                    break;
+                                }
+                            }
+                            if (!eMaximo)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    if (eMaximo)
+                    {
+                        cims.push_back(conjunto);
+                    }
+                }
+            }
+            for (auto &I : cims)
+            {
+                // Calcul um indice que tem bits ligados
+                // correspondentes aos vértices do CIM I
                 int i = 0;
-                // Calcular índice do subconjunto S sem o CIM I
                 for (int v : I)
                 {
                     i |= (1 << v);
                 }
-                // remove os vértices de I de S
+                // remove os vértices (bits) de I de S
                 i = s & ~i;
-                if (X[i] != MAX)
-                {
-                    X[s] = std::min(X[s], X[i] + 1);
-                }
+                X[s] = std::min(X[s], X[i] + 1);
             }
         }
         return X[numSubconjuntos - 1];
