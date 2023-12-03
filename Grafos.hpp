@@ -461,12 +461,7 @@ public:
     {
         int V = qtdVertices();
         std::vector<Arco> arvore_geradora_minima;
-        std::vector<cd_Elemento *> S(V);
-        for (int v = 0; v < V; v++)
-        {
-            cd_Elemento *x = new cd_Elemento();
-            S[v] = x;
-        }
+        std::vector<cd_Elemento> S(V, cd_Elemento());
 
         // ordena as arestas em ordem crescente de peso
         std::sort(arcos.begin(), arcos.end());
@@ -478,19 +473,14 @@ public:
             auto y = S[arcos[i].v - 1];
 
             // verifica se u e v estão em conjuntos disjuntos
-            if (x->pai != y->pai)
+            if (x.pai != y.pai)
             {
                 // une os conjuntos disjuntos
-                x->uniao(x, y);
+                x.uniao(&x, &y);
 
                 // adiciona a aresta na árvore geradora mínima
                 arvore_geradora_minima.push_back(arcos[i]);
             }
-        }
-
-        for (int v = 0; v < V; v++)
-        {
-            delete S[v];
         }
 
         return arvore_geradora_minima;
@@ -758,13 +748,13 @@ public:
     }
 
     // Para o Algoritmo Edmonds-Karp
-    std::vector<int> BuscaEmLarguraEK(int s, int t, std::vector<std::vector<float>> &Gf)
+    std::deque<int> BuscaEmLarguraEK(int s, int t, std::vector<std::vector<float>> &Gf)
     {
         int V = qtdVertices();
         std::vector<bool> conhecidos(V, false);
         std::vector<int> ancestrais(V, -1);
 
-        conhecidos[s] = true;
+        conhecidos[s - 1] = true;
         std::queue<int> Q;
         Q.push(s);
 
@@ -773,46 +763,45 @@ public:
             int u = Q.front();
             Q.pop();
 
-            for (int v : vertices[u].vizinhos)
+            for (int v : vertices[u - 1].vizinhos)
             {
-                if (!conhecidos[v] && Gf[u][v] > 0)
+                if (!conhecidos[v - 1] && Gf[u - 1][v - 1] > 0)
                 {
-                    conhecidos[v] = true;
-                    ancestrais[v] = u;
+                    conhecidos[v - 1] = true;
+                    ancestrais[v - 1] = u;
                     if (v == t)
                     {
-                        std::vector<int> caminho;
-                        for (int w = t; w != s; w = ancestrais[w])
+                        std::deque<int> caminho;
+                        for (int w = t; w != s; w = ancestrais[w - 1])
                         {
-                            caminho.push_back(w);
+                            caminho.push_front(w);
                         }
-                        caminho.push_back(s);
-                        std::reverse(caminho.begin(), caminho.end());
+                        caminho.push_front(s);
                         return caminho;
                     }
                     Q.push(v);
                 }
             }
         }
-        return std::vector<int>(); // Caminho não encontrado
+        return std::deque<int>(); // Caminho não encontrado
     }
 
     float EdmondsKarp(int s, int t)
     {
         int V = qtdVertices();
+        float fluxo_maximo = 0;
+
         // Criando a rede de fluxo Gf a partir do grafo original
         std::vector<std::vector<float>> Gf(V, std::vector<float>(V, 0));
         for (Arco &arco : arcos)
         {
             // Rede de fluxo direcional
-            Gf[arco.u][arco.v] = arco.peso;
+            Gf[arco.u - 1][arco.v - 1] = arco.peso;
         }
-
-        float fluxo_maximo = 0;
 
         while (true)
         {
-            std::vector<int> caminho = BuscaEmLarguraEK(s, t, Gf);
+            std::deque<int> caminho = BuscaEmLarguraEK(s, t, Gf);
             if (caminho.empty())
             {
                 // Não há mais caminho aumentante
@@ -821,38 +810,63 @@ public:
 
             // Encontrar a menor capacidade no caminho
             float fluxo_caminho = MAX;
-            for (size_t i = 0; i < caminho.size() - 1; ++i)
+            for (size_t i = 1; i < caminho.size(); ++i)
             {
-                int u = caminho[i];
-                int v = caminho[i + 1];
+                int u = caminho[i - 1] - 1;
+                int v = caminho[i] - 1;
                 fluxo_caminho = std::min(fluxo_caminho, Gf[u][v]);
             }
 
             // Atualizar a rede de fluxo e o fluxo reverso
-            for (size_t i = 0; i < caminho.size() - 1; ++i)
+            for (size_t i = 1; i < caminho.size(); ++i)
             {
-                int u = caminho[i];
-                int v = caminho[i + 1];
+                int u = caminho[i - 1] - 1;
+                int v = caminho[i] - 1;
                 Gf[u][v] -= fluxo_caminho;
                 Gf[v][u] += fluxo_caminho;
             }
-
             fluxo_maximo += fluxo_caminho;
         }
 
         return fluxo_maximo;
     }
 
-    bool DFS_HK(std::vector<int> &mate, std::vector<int> &D, int x)
+    // Função para bipartir o grafo
+    std::vector<std::vector<int>> bipartirGrafo()
+    {
+        int V = qtdVertices();
+        // Determina o ponto de divisão entre X e Y
+        int meio = V / 2;
+        std::vector<std::vector<int>> adjBipartido(V);
+
+        for (int u = 0; u < V; ++u)
+        {
+            for (int v : vizinhos(u))
+            {
+                if ((u < meio && v >= meio) || (u >= meio && v < meio))
+                {
+                    adjBipartido[u].push_back(v);
+                }
+            }
+        }
+
+        return adjBipartido;
+    }
+
+    bool DFS_HK(std::vector<int> &mate,
+                std::vector<Arco> &emparelhamento,
+                std::vector<int> &D, int x)
     {
         if (x != 0)
         {
             for (int y : vizinhos(x))
             {
-                if (D[mate[y]] == D[x] + 1 && DFS_HK(mate, D, mate[y]))
+                if ((D[mate[y]] == (D[x] + 1)) &&
+                    DFS_HK(mate, emparelhamento, D, mate[y]))
                 {
                     mate[y] = x;
                     mate[x] = y;
+                    emparelhamento.push_back({x, y, peso(x, y)});
                     return true;
                 }
             }
@@ -877,7 +891,8 @@ public:
                 D[x] = MAX;
             }
         }
-        D[0] = MAX; // 0 usado como Nulo
+        // 0 usado como Nulo
+        D[0] = MAX;
 
         while (!Q.empty())
         {
@@ -899,25 +914,24 @@ public:
         return D[0] != MAX;
     }
 
-    int HopcroftKarp()
+    std::vector<Arco> HopcroftKarp(std::vector<int> X)
     {
         int V = qtdVertices();
-        std::vector<int>
-            mate(V + 1, 0);             // Vetor de emparelhamento, inicializado com 0
-        std::vector<int> D(V + 1, MAX); // Vetor de distâncias
-        int m = 0;
+        // Vetor de emparelhamento, inicializado com 0
+        std::vector<int> mate(V + 1, 0);
+        // Vetor de distâncias
+        std::vector<int> D(V + 1, MAX);
+        // arestas emparelhadas
+        std::vector<Arco> emparelhamento;
 
         while (BFS_HK(mate, D))
         {
-            for (int x = 1; x <= V; ++x)
-            { // Começando de 1, pois 0 é o nulo
-                if (mate[x] == 0 && DFS_HK(mate, D, x))
-                {
-                    m++;
-                }
+            for (int x : X)
+            {
+                DFS_HK(mate, emparelhamento, D, x);
             }
         }
-        return m;
+        return emparelhamento;
     }
 
     // Função auxiliar para verificar se um conjunto é um clique independente

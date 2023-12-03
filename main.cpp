@@ -116,23 +116,33 @@ void Prim(Grafo &G)
     std::cout << arestas << '\n';
 }
 
-// Ao final, imprima na tela o valor do fluxo
-// máximo resultante da execução do algoritmo
-// de Edmonds-Karp.
 void EdmondsKarp(Grafo &G)
 {
-    float resultado = G.EdmondsKarp(1, G.qtdVertices() - 1);
+    float resultado = G.EdmondsKarp(1, G.qtdVertices());
     std::cout << resultado << '\n';
 }
 
 // Crie um programa que receba um arquivo de grafo bipartido,
 // não-dirigido, não-ponderado e informe qual o valor do
 // emparelhamento máximo e quais arestas pertencem a ele.
-// Utilize o algoritmo de HopcroftKarp.
+// Utilize o algoritmo de Hopcroft-Karp.
 void HopcroftKarp(Grafo &G)
 {
-    auto resultado = G.HopcroftKarp();
-    std::cout << resultado << '\n';
+    std::vector<int> X;
+    for (int i = 1; i <= G.qtdVertices(); ++i)
+    {
+        if (i & 1)
+        {
+            X.push_back(i);
+        }
+    }
+    auto resultado = G.HopcroftKarp(X);
+    std::cout << "emparelhamento = " << resultado.size() << '\n';
+    for (auto aresta : resultado)
+    {
+        std::cout << "{" << aresta.u << "," << aresta.v << "}, ";
+    }
+    std::cout << '\n';
 }
 
 // Crie um programa que recebe um grafo não-
@@ -171,10 +181,14 @@ int main(int argc, char **argv)
     ordenacao_topologica(G);
     std::cout << "\nKruskal\n";
     Kruskal(G);
-    // std::cout << "\nPrim\n";
-    // Prim(G);
+    std::cout << "\nPrim\n";
+     Prim(G);
     */
     std::cout << "\nEdmonds Karp\n";
     EdmondsKarp(G);
+    std::cout << "\nHopcroft Karp\n";
+    HopcroftKarp(G);
+    // std::cout << "\nColoracao Vertices\n";
+    // ColoracaoVertices(G);
     return 0;
 }
